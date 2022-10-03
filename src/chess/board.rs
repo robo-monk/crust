@@ -54,6 +54,7 @@ impl Piece {
   }
 }
 
+
 impl Board {
   pub fn new() -> Self {
     Board {
@@ -66,6 +67,15 @@ impl Board {
   pub fn print(&self) -> () {
     println!("{}", self.render_acii());
   }
+
+  pub fn get_square(self, square: String) -> Option<Piece> {
+    let chs: Vec<char> = square.chars().collect();
+    let file = chs[0].to_ascii_lowercase() as u32 - 97; // a is 97 in ascii
+    let rank = chs[1].to_digit(10).unwrap_or_else(|| panic!("invalid square")); // 1-8
+    let i = ((8-rank)*8 + file) as usize;
+    self.squares[i as usize]
+  }
+
 
   // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
   pub fn from_fen(fen: String) -> Self {

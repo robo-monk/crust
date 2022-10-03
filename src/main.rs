@@ -8,6 +8,9 @@ fn main() {
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     let board = Board::from_fen(fen);
     dbg!(&board);
-    
-    board.print()
+
+    board.print();
+
+    let a = board.get_square("E2".to_string());
+    dbg!(a);
 }
