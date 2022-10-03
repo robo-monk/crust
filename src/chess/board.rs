@@ -34,6 +34,24 @@ impl Piece {
       class, color
     }
   }
+
+  pub fn symbol(&self) -> &str {
+    match (self.color, self.class) {
+       (Color::White, P::Pawn) => "♙",
+       (Color::White, P::Knight) => "♘",
+       (Color::White, P::Bishop) => "♗",
+       (Color::White, P::Rook) => "♖",
+       (Color::White, P::Queen) => "♕",
+       (Color::White, P::King) => "♔",
+
+       (Color::Black, P::Pawn) => "♟",
+       (Color::Black, P::Knight) => "♞",
+       (Color::Black, P::Bishop) => "♝",
+       (Color::Black, P::Rook) => "♜",
+       (Color::Black, P::Queen) => "♛",
+       (Color::Black, P::King) => "♚",
+    }
+  }
 }
 
 
@@ -57,7 +75,7 @@ impl Board {
       out += "\n";
       out += &format!("{}  ", 8-row);
       for col in 0..8 {
-        out += &format!("⏐ {} ", "K");
+        out += &format!("⏐ {} ", self.squares[col].unwrap().symbol());
       }
       out += "⏐\n";
     }
