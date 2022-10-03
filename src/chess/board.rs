@@ -68,17 +68,39 @@ impl Board {
     println!("{}", self.render_acii());
   }
 
-  pub fn get_square(self, square: String) -> Option<Piece> {
-    let chs: Vec<char> = square.chars().collect();
+  pub fn parse_notation(&self, notation: &String) -> usize {
+    let chs: Vec<char> = notation.chars().collect();
     let file = chs[0].to_ascii_lowercase() as u32 - 97; // a is 97 in ascii
     let rank = chs[1].to_digit(10).unwrap_or_else(|| panic!("invalid square")); // 1-8
-    let i = ((8-rank)*8 + file) as usize;
-    self.squares[i as usize]
+    ((8-rank)*8 + file) as usize
   }
 
+  pub fn get_square(&self, square: &String) -> Option<Piece> {
+    let i = self.parse_notation(square);
+    self.squares[i]
+  }
+
+  pub fn set_square(&mut self, square: &String, p: Option<Piece>) -> () {
+    let i = self.parse_notation(square);
+    self.squares[i] = p;
+  }
+
+  pub fn _make_move(&mut self, from: &String, to: &String) -> () {
+    let piece = self.get_square(from);
+
+    if piece.is_none() {
+      panic!("invalid move")
+    }
+
+    self.set_square(to, piece);
+    self.set_square(from, None);
+  }
+  pub fn make_move(&mut self, from: &str, to: &str) -> () {
+    self._make_move(&from.to_string(), &to.to_string());
+  }
 
   // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-  pub fn from_fen(fen: String) -> Self {
+  pub fn from_fen(fen: &String) -> Self {
     let mut board = Board::new();
     // let ranks : String = fen.split(" ").collect();
     let fields: Vec<&str> = fen.split(" ").collect();
