@@ -120,8 +120,9 @@ impl Board {
       out += "\n";
       out += &format!("{}  ", 8 - rank);
       for file in 0..8 {
-        if self.squares[file].is_some() {
-          out += &format!("⏐ {} ", self.squares[file].unwrap().symbol());
+        let i = 8*rank + file;
+        if self.squares[i].is_some() {
+          out += &format!("⏐ {} ", self.squares[i].unwrap().symbol());
         } else {
           out += &format!("⏐ {} ", " ");
         }
