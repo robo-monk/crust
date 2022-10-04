@@ -70,25 +70,44 @@ impl Board {
     self._make_move(&from.to_string(), &to.to_string());
   }
 
-  pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
-    let piece = self.get_square(&notation.to_string()).unwrap_or_else(|| panic!("can't get moves of not a piece"));
+  // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
+  pub fn get_available_moves(&self, notation: &str) -> Vec<u64> {
+    let index = Board::parse_notation(&notation.to_string()).unwrap();
+    let piece = self.squares[index].unwrap();
+    // let piece = self.get_square(&notation.to_string()).unwrap_or_else(|| panic!("can't get moves of not a piece"));
 
     if piece.color != self.turn {
       return vec![];
     }
 
-    match piece.class {
+    let diff = match piece.class {
       P::Pawn => {
         todo!()
       },
       P::Knight => {
-        // Up + UpLeft
-        // Up + UpRight
-        Direction::Up + Direction::UpLeft;
-        todo!()
+        vec![
+          Direction::Up + Direction::UpLeft,
+          Direction::Up + Direction::UpRight,
+
+          Direction::Down + Direction::DownLeft,
+          Direction::Down + Direction::DownRight,
+
+          Direction::Left + Direction::UpLeft,
+          Direction::Left + Direction::DownLeft,
+
+          Direction::Right + Direction::DownRight,
+          Direction::Right + Direction::DownRight,
+        ]
       }
       _ => panic!("invalid piece?")
-    }
+    };
+
+
+    diff.iter()
+      .map(|d| index as i64 + d)
+      .filter(|t| t >= &0 && t < &64)
+      .map(|t| t.abs() as u64)
+      .collect::<Vec<u64>>()
   }
 
   // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
