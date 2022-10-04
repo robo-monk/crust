@@ -10,13 +10,16 @@ fn main() {
 
     // board.get_square();
     board.make_move("e2", "e4");
-    board.print();
+    // board.print();
     board.make_move("d7", "d5");
-    board.print();
+    // board.print();
     board.make_move("e4", "d5");
-    board.print();
+    // board.print();
     board.make_move("d8", "d5");
     board.print();
+
+    // dbg!(board.get_available_moves("b1"));
+    board.print_available_moves("b1")
 
     // let a = board.get_square(&"E2".to_string());
     // dbg!(a);

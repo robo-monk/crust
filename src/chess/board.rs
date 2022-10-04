@@ -5,7 +5,7 @@ pub struct Move {
   to: usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Board {
   turn: Color,
   move_count: u64,
@@ -42,9 +42,12 @@ impl Board {
     self.squares[i]
   }
 
+  pub fn _set_square(&mut self, index: usize, p: Option<Piece>) -> () {
+    self.squares[index] = p;
+  }
   pub fn set_square(&mut self, square: &String, p: Option<Piece>) -> () {
     let i = Board::parse_notation(square).unwrap();
-    self.squares[i] = p;
+    self._set_square(i, p);
   }
 
   pub fn _make_move(&mut self, from: &String, to: &String) -> () {
@@ -108,6 +111,20 @@ impl Board {
       .filter(|t| t >= &0 && t < &64)
       .map(|t| t.abs() as u64)
       .collect::<Vec<u64>>()
+  }
+
+  pub fn print_available_moves(&mut self, notation: &str) -> () {
+    let moves = self.get_available_moves(notation);
+    // let &mut board = self.clone_into(&mut Board);
+    // let &mut board = self.clonle_into(&mut Board);
+    // let mut clone = self.clone();
+    let mut board: &mut Board = &mut self.clone();
+    // let board: &mut Board = &clone;
+
+    moves.iter().for_each(|t| {
+      board._set_square(*t as usize, Some(Piece::new(P::Preview, Color::White)));
+    });
+    board.print()
   }
 
   // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1

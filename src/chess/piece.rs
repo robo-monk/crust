@@ -44,7 +44,9 @@ pub enum P {
   Bishop,
   Rook,
   Queen,
-  King
+  King,
+
+  Preview
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -68,6 +70,7 @@ impl Piece {
        (Color::White, P::Rook) => "♖",
        (Color::White, P::Queen) => "♕",
        (Color::White, P::King) => "♔",
+       (Color::White, P::Preview) => "x",
 
        (Color::Black, P::Pawn) => "♟",
        (Color::Black, P::Knight) => "♞",
@@ -75,6 +78,7 @@ impl Piece {
        (Color::Black, P::Rook) => "♜",
        (Color::Black, P::Queen) => "♛",
        (Color::Black, P::King) => "♚",
+       (Color::Black, P::Preview) => ".",
     }
   }
 
