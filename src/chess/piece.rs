@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Mul};
 
 impl Add for Direction {
   type Output = i64;
@@ -6,6 +6,33 @@ impl Add for Direction {
     self.value() + rhs.value()
   }
 }
+
+impl Add<Direction> for usize {
+  type Output = usize;
+  fn add(self, rhs: Direction) -> Self::Output {
+    let target = self as isize + rhs.value() as isize;
+
+    if target.is_negative() {
+      self
+    } else {
+      target.abs() as usize
+    }
+  }
+}
+
+// impl Mul<Direction> for i32 {
+//   type Output = i64;
+
+//   fn mul(self, mut rhs: Direction) -> Self::Output {
+//     let mut out: i64 = 0;
+
+//     for _ in 0..self {
+//       out = 
+//     }
+//     out
+
+//   }
+// }
 
 impl Direction {
   pub fn value(&self) -> i64 {

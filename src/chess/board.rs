@@ -34,7 +34,7 @@ impl Board {
     let chs: Vec<char> = notation.chars().collect();
     let file = chs[0].to_ascii_lowercase() as u32 - 97; // a is 97 in ascii
     let rank = chs[1].to_digit(10).unwrap_or_else(|| panic!("invalid square")); // 1-8
-   Some(((8-rank)*8 + file) as usize)
+    Some(((8-rank)*8 + file) as usize)
   }
 
   pub fn get_square(&self, square: &String) -> Option<Piece> {
@@ -74,7 +74,7 @@ impl Board {
   }
 
   // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
-  pub fn get_available_moves(&self, notation: &str) -> Vec<u64> {
+  pub fn get_available_moves(&self, notation: &str) -> Vec<usize> {
     let index = Board::parse_notation(&notation.to_string()).unwrap();
     let piece = self.squares[index].unwrap();
     // let piece = self.get_square(&notation.to_string()).unwrap_or_else(|| panic!("can't get moves of not a piece"));
@@ -83,34 +83,60 @@ impl Board {
       return vec![];
     }
 
-    let diff = match piece.class {
+    let targets = match piece.class {
       P::Pawn => {
         todo!()
       },
       P::Knight => {
         vec![
-          Direction::Up + Direction::UpLeft,
-          Direction::Up + Direction::UpRight,
+          // index + 2*Direction::Up + Direction::Left,
+          index + Direction::Up + Direction::Up + Direction::Right,
+          index + Direction::Down + Direction::Down + Direction::Right,
 
-          Direction::Down + Direction::DownLeft,
-          Direction::Down + Direction::DownRight,
+          index + Direction::Up + Direction::Up + Direction::Left,
+          index + Direction::Down + Direction::Down + Direction::Left,
 
-          Direction::Left + Direction::UpLeft,
-          Direction::Left + Direction::DownLeft,
+          index + Direction::Left + Direction::Left + Direction::Up,
+          index + Direction::Left + Direction::Left + Direction::Down,
 
-          Direction::Right + Direction::DownRight,
-          Direction::Right + Direction::DownRight,
+          index + Direction::Right + Direction::Right + Direction::Up,
+          index + Direction::Right + Direction::Right + Direction::Down,
+          // Direction::Up + Direction::Up + Direction::Right,
+
+          // Direction::Down + Direction::DownLeft,
+          // Direction::Down + Direction::DownRight,
+
+          // Direction::Left + Direction::UpLeft,
+          // Direction::Left + Direction::DownLeft,
+
+          // Direction::Right + Direction::UpRight,
+          // Direction::Right + Direction::DownRight,
         ]
+        // vec![
+        //   Direction::Up + Direction::UpLeft,
+        //   Direction::Up + Direction::UpRight,
+
+        //   Direction::Down + Direction::DownLeft,
+        //   Direction::Down + Direction::DownRight,
+
+        //   Direction::Left + Direction::UpLeft,
+        //   Direction::Left + Direction::DownLeft,
+
+        //   Direction::Right + Direction::UpRight,
+        //   // Direction::Right + Direction::DownRight,
+        // ]
       }
       _ => panic!("invalid piece?")
     };
 
+    targets
 
-    diff.iter()
-      .map(|d| index as i64 + d)
-      .filter(|t| t >= &0 && t < &64)
-      .map(|t| t.abs() as u64)
-      .collect::<Vec<u64>>()
+
+    // diff.iter()
+    //   .map(|d| index as i64 + d)
+    //   .filter(|t| t >= &0 && t < &64)
+    //   .map(|t| t.abs() as u64)
+    //   .collect::<Vec<u64>>()
   }
 
   pub fn print_available_moves(&mut self, notation: &str) -> () {

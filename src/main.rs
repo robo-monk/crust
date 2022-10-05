@@ -19,7 +19,8 @@ fn main() {
     board.print();
 
     // dbg!(board.get_available_moves("b1"));
-    board.print_available_moves("b1")
+    board.print_available_moves("b1");
+    board.print_available_moves("g1")
 
     // let a = board.get_square(&"E2".to_string());
     // dbg!(a);
