@@ -8,14 +8,20 @@ impl Add for Direction {
 }
 
 impl Add<Direction> for usize {
-  type Output = usize;
+  type Output = Option<usize>;
+
+  // add a direction
   fn add(self, rhs: Direction) -> Self::Output {
     let target = self as isize + rhs.value() as isize;
 
-    if target.is_negative() {
-      self
+    println!("{:?} + {:?} = {}", self, rhs, target);
+
+    // if direction becomes negative,
+    // it cannot be added because the piece is going out of bounds
+    if target < 0 || target >= 64  {
+      None
     } else {
-      target.abs() as usize
+      Some(target.abs() as usize)
     }
   }
 }
