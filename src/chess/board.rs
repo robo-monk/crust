@@ -41,6 +41,9 @@ impl Board {
         Some(((8 - rank) * 8 + file) as usize)
     }
 
+    pub fn get_index(&self, index: usize) -> Option<Piece> {
+        self.squares[index]
+    }
     pub fn get_square(&self, square: &String) -> Option<Piece> {
         let i = Board::parse_notation(square).unwrap();
         self.squares[i]
@@ -87,46 +90,50 @@ impl Board {
             return vec![];
         }
 
-        let paths = match piece.class {
-            P::Pawn => {
-                todo!()
-            }
-            P::Knight => {
-                vec![
-                    vec![Direction::Up, Direction::Up, Direction::Left],
-                    vec![Direction::Up, Direction::Up, Direction::Right],
+        let paths = piece.get_paths();
 
-                    vec![Direction::Down, Direction::Down, Direction::Left],
-                    vec![Direction::Down, Direction::Down, Direction::Right],
+        paths
+            .iter()
+            .map(|path| {
+                // the sum of all of the elements of the array
+                let mut target = Some(index);
+                for direction in path.iter() {
+                    target = target.unwrap() + *direction;
+                    if target.is_none() {
+                        break;
+                    }
 
-                    vec![Direction::Left, Direction::Left, Direction::Up],
-                    vec![Direction::Left, Direction::Left, Direction::Down],
+                    let _target_piece = self.squares[target.unwrap()];
 
-                    vec![Direction::Right, Direction::Right, Direction::Up],
-                    vec![Direction::Right, Direction::Right, Direction::Down],
+                    if _target_piece.is_some() {
+                        let target_piece = _target_piece.unwrap();
 
-                ]
-            }
-            _ => panic!("invalid piece?"),
-        };
-        paths.iter().map(|path| {
-            // the sum of all of the elements of the array
-            let mut target = Some(index);
-            for direction in path.iter() {
-              let sum = target.unwrap() + *direction;
-              target = sum;
-              if sum.is_none() {
-                break;
-              }
-            }
+                        // if piece can't pass through the next step piece, burn the path
+                        if !(piece >> target_piece) {
+                            target = None;
+                            break;
+                        }
+                    }
 
-            println!("targe> {:?}", target);
-            target
-        })
-        .filter(|target| target.is_some())
-        .map(|target| target.unwrap())
-        .collect()
+                    // if self.get_index(target.unwrap()).unwrap()
+                }
 
+                if target.is_some() && self.squares[target.unwrap()].is_some() {
+                    let _target_piece = self.squares[target.unwrap()];
+                    let target_piece = _target_piece.unwrap();
+
+                    // if piece can't land on the final target piece, burn the path
+                    if !(piece ^ target_piece) {
+                        target = None;
+                    }
+                }
+
+                println!("targe> {:?}", target);
+                target
+            })
+            .filter(|target| target.is_some())
+            .map(|target| target.unwrap())
+            .collect()
     }
 
     pub fn print_available_moves(&mut self, notation: &str) -> () {
