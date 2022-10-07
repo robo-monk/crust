@@ -1,3 +1,4 @@
+use super::board::Board;
 use std::ops::{Add, Mul, Shr, ShrAssign, BitXor};
 
 // A >> B (can A pass through B?)
@@ -161,10 +162,12 @@ impl Piece {
         }
     }
 
-    pub fn get_paths(&self) -> Vec<Vec<Direction>> {
+    pub fn get_paths(&self, board: &Board) -> Vec<Vec<Direction>> {
         match self.class {
             P::Pawn => {
-                todo!()
+              vec![
+                vec![]
+              ]
             }
             P::Knight => {
                 vec![

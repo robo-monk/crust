@@ -16,10 +16,16 @@ fn main() {
     board.make_move("e4", "d5");
     // board.print();
     board.make_move("d8", "d5");
+    board.make_move("a2", "a3");
     board.print();
 
-    dbg!(board.get_available_moves("b1"));
+    // dbg!(board.get_available_moves("b1"));
+    board.print_available_moves("b8");
+    board.make_move("b8", "d7");
     board.print_available_moves("b1");
+    board.make_move("b1", "c3");
+    board.print_available_moves("d7");
+    // board.print_available_moves("b1");
 
     // board.print_available_moves("g1")
 

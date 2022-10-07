@@ -90,7 +90,7 @@ impl Board {
             return vec![];
         }
 
-        let paths = piece.get_paths();
+        let paths = piece.get_paths(&self);
 
         paths
             .iter()
