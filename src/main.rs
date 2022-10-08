@@ -10,14 +10,11 @@ fn main() {
 
     // board.get_square();
     board.make_move("e2", "e4");
-    // board.print();
     board.make_move("d7", "d5");
-    // board.print();
     board.make_move("e4", "d5");
-    // board.print();
     board.make_move("d8", "d5");
     board.make_move("a2", "a3");
-    board.print();
+    // board.print();
 
     // dbg!(board.get_available_moves("b1"));
     board.print_available_moves("b8");
@@ -25,6 +22,10 @@ fn main() {
     board.print_available_moves("b1");
     board.make_move("b1", "c3");
     board.print_available_moves("d7");
+    // board.print_available_moves("d1");
+    board.make_move("g8", "f6");
+    board.make_move("d1", "e2");
+    board.print_available_moves("d5");
     // board.print_available_moves("b1");
 
     // board.print_available_moves("g1")

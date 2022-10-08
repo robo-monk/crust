@@ -1,25 +1,24 @@
 use super::board::Board;
-use std::ops::{Add, Mul, Shr, ShrAssign, BitXor};
+use std::ops::{Add, BitXor, Mul, Shr, ShrAssign};
 
 // A >> B (can A pass through B?)
 impl Shr for Piece {
-  type Output = bool;
-  fn shr(self, rhs: Self) -> Self::Output {
-    if self.is_knight() { 
-      true 
-    } else {
-      false
+    type Output = bool;
+    fn shr(self, rhs: Self) -> Self::Output {
+        if self.is_knight() {
+            true
+        } else {
+            false
+        }
+        //  todo!()
     }
-    //  todo!() 
-  }
-
 }
 
 impl BitXor for Piece {
-  type Output = bool;
-  fn bitxor(self, rhs: Self) -> Self::Output {
-    self.color != rhs.color
-  }
+    type Output = bool;
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        self.color != rhs.color
+    }
 }
 
 impl Add for Direction {
@@ -36,11 +35,24 @@ impl Add<Direction> for usize {
     fn add(self, rhs: Direction) -> Self::Output {
         let target = self as isize + rhs.value() as isize;
 
-        println!("{:?} + {:?} = {}", self, rhs, target);
+        let self_rank = self / 8;
+        let target_rank = (target / 8).abs() as usize;
+
+        println!(
+            "{:?} + {:?} = {} [selfrank: {}, trank: {}]",
+            self,
+            rhs,
+            target,
+            self / 8,
+            target / 8
+        );
 
         // if direction becomes negative,
         // it cannot be added because the piece is going out of bounds
-        if target < 0 || target >= 64 {
+        if target < 0
+            || target >= 64
+            || (rhs == Direction::Left || rhs == Direction::Right) && self_rank != target_rank
+        {
             None
         } else {
             Some(target.abs() as usize)
@@ -76,9 +88,13 @@ impl Direction {
             _ => panic!("invalid direction"),
         }
     }
+
+    pub fn range(dir: Direction, i: usize) -> Vec<Vec<Direction>> {
+        (1..i).into_iter().map(|i| vec![dir; i]).collect()
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     Up,
     Down, // and in the end its only round and round
@@ -88,6 +104,10 @@ pub enum Direction {
     UpRight,
     DownLeft,
     DownRight,
+
+    Repeat, // special direction
+            // used to repeat the previous direction
+            // in contexes like a vec![Direction::Up, Direction::Repeat]
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -120,26 +140,26 @@ impl Piece {
     }
 
     pub fn is(&self, class: P) -> bool {
-      self.class == class
+        self.class == class
     }
 
     pub fn is_queen(&self) -> bool {
-      self.is(P::Queen)
+        self.is(P::Queen)
     }
     pub fn is_bishop(&self) -> bool {
-      self.is(P::Bishop)
+        self.is(P::Bishop)
     }
     pub fn is_rook(&self) -> bool {
-      self.is(P::Rook)
+        self.is(P::Rook)
     }
     pub fn is_king(&self) -> bool {
-      self.is(P::King)
+        self.is(P::King)
     }
     pub fn is_pawn(&self) -> bool {
-      self.is(P::Pawn)
+        self.is(P::Pawn)
     }
     pub fn is_knight(&self) -> bool {
-      self.is(P::Knight)
+        self.is(P::Knight)
     }
 
     pub fn symbol(&self) -> &str {
@@ -165,9 +185,24 @@ impl Piece {
     pub fn get_paths(&self, board: &Board) -> Vec<Vec<Direction>> {
         match self.class {
             P::Pawn => {
-              vec![
+                vec![
+                    vec![Direction::Up, Direction::Repeat],
+                    vec![Direction::Down, Direction::Repeat],
+                    vec![Direction::Left, Direction::Repeat],
+                    vec![Direction::Right, Direction::Repeat],
+                ]
+            }
+            P::Queen => {
+                // (1..8).into_iter().map(|i| {
+                // vec![Direction::Up; i]
+                // }).collect()
                 vec![]
-              ]
+                    .into_iter()
+                    .chain(Direction::range(Direction::Down, 8))
+                    .chain(Direction::range(Direction::Up, 8))
+                    .chain(Direction::range(Direction::Left, 8))
+                    // .chain(Direction::range(Direction::Right, 8))
+                    .collect()
             }
             P::Knight => {
                 vec![
@@ -184,5 +219,4 @@ impl Piece {
             _ => panic!("invalid piece?"),
         }
     }
-
 }
