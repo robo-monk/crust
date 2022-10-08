@@ -40,13 +40,38 @@ fn main() {
     board.make_move("f8", "a4");
     board.print_available_moves("c4"); // bishiop moves
 
-    let moves = board.get_all_possible_moves();
+    // let moves = board.get_all_possible_moves();
+
+    // for m in &moves {
+    //     let mut _board = board.clone();
+    //     _board.push_move(m);
+    // }
+
+    fn count_deep_moves(board: &Board, depth: usize) -> usize {
+        if depth <= 0 { return 0 }
+
+
+        let moves = board.get_all_possible_moves();
+        let mut move_count = moves.len();
+
+        for m in &moves {
+            let mut _board = board.clone();
+            _board.push_move(m);
+            move_count += count_deep_moves(&_board, depth - 1);
+        }
+
+        move_count
+        // moves.len()
+    }
+
+    let c = count_deep_moves(&board.clone(), 3);
+    println!("count is {c}");
 
     // moves.len()
     // for m in moves {
         // board._make_move()
     // }
-    println!("total moves possible {:?} [len: {:?}]", moves, moves.len());
+    // println!("total moves possible {:?} [len: {:?}]", moves, moves.len());
     // board.make_move("b5", "b4");
     // board.print_available_moves("b1");
 

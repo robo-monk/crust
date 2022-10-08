@@ -42,7 +42,7 @@ impl Board {
         Some(((8 - rank) * 8 + file) as usize)
     }
 
-    pub fn get_all_possible_moves(&mut self) -> Vec<Move> {
+    pub fn get_all_possible_moves(&self) -> Vec<Move> {
       let mut moves: Vec<Move> = Vec::new();
       for i in 0..64 {
         // moves.iter().chain(self._get_available_moves(i))
@@ -72,15 +72,22 @@ impl Board {
         self._set_square(i, p);
     }
 
-    pub fn _make_move(&mut self, from: &String, to: &String) -> () {
-        let piece = self.get_square(from);
+    pub fn push_move(&mut self, m: &Move) -> () {
+      self._make_move(m.from, m.target);
+    }
+
+    // pub fn _make_move(&mut self, from: &String, to: &String) -> () {
+    pub fn _make_move(&mut self, from: usize, to: usize) -> () {
+        // let piece = self.get_square(from);
+        let piece = self.squares[from];
 
         if piece.is_none() {
             panic!("invalid move")
+            // return
         }
 
-        self.set_square(to, piece);
-        self.set_square(from, None);
+        self._set_square(to, piece);
+        self._set_square(from, None);
 
         self.turn = if self.turn == Color::Black {
             Color::White
@@ -92,8 +99,12 @@ impl Board {
     }
 
     pub fn make_move(&mut self, from: &str, to: &str) -> () {
-        self._make_move(&from.to_string(), &to.to_string());
+        let _from = Board::parse_notation(&from.to_string()).unwrap();
+        let _to = Board::parse_notation(&to.to_string()).unwrap();
+
+        self._make_move(_from, _to);
     }
+
 
     // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
     pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
