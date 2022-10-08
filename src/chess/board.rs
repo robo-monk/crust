@@ -97,7 +97,7 @@ impl Board {
             .map(|path| {
                 // the sum of all of the elements of the array
                 let mut target = Some(index);
-                for direction in path.iter() {
+                for (i, direction) in path.iter().enumerate() {
                     target = target.unwrap() + *direction;
                     if target.is_none() {
                         break;
@@ -108,9 +108,15 @@ impl Board {
                     if _target_piece.is_some() {
                         let target_piece = _target_piece.unwrap();
 
-                        // if piece can't pass through the next step piece, burn the path
-                        if !(piece >> target_piece) {
-                            target = None;
+                        // if piece can't land (if final step ) or pass through the next step piece, burn the path
+
+                        if !(piece >> target_piece) || i == path.len() - 1 {
+                            if piece ^ target_piece {
+                                println!("CAN EAT> {:?}", target_piece);
+                            } else {
+                                target = None;
+                            }
+
                             break;
                         }
                     }
@@ -121,11 +127,9 @@ impl Board {
                 if target.is_some() && self.squares[target.unwrap()].is_some() {
                     let _target_piece = self.squares[target.unwrap()];
                     let target_piece = _target_piece.unwrap();
+                    println!("targepiel> {:?}", target_piece);
 
                     // if piece can't land on the final target piece, burn the path
-                    if !(piece ^ target_piece) {
-                        target = None;
-                    }
                 }
 
                 println!("targe> {:?}", target);

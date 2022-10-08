@@ -33,10 +33,14 @@ fn main() {
     board.make_move("e2", "e5");
     board.print_available_moves("b7"); // pawn moves
     board.make_move("b7", "b5");
-    board.make_move("d2", "d3");
+    board.make_move("d2", "d4");
     board.print_available_moves("b5"); // pawn moves
     board.make_move("b5", "b4");
-    board.print_available_moves("f1"); // pawn moves
+    board.print_available_moves("f1"); // bishiop moves
+    board.make_move("f1", "c4");
+    board.make_move("f8", "a4");
+    board.print_available_moves("c4"); // bishiop moves
+    // board.make_move("b5", "b4");
     // board.print_available_moves("b1");
 
     // board.print_available_moves("g1")
