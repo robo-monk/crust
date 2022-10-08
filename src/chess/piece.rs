@@ -201,6 +201,11 @@ impl Piece {
                     .chain(Direction::range(Direction::Down, 8))
                     .chain(Direction::range(Direction::Up, 8))
                     .chain(Direction::range(Direction::Left, 8))
+                    .chain(Direction::range(Direction::Right, 8))
+                    .chain(Direction::range(Direction::UpRight, 8))
+                    .chain(Direction::range(Direction::UpLeft, 8))
+                    .chain(Direction::range(Direction::DownRight, 8))
+                    .chain(Direction::range(Direction::DownLeft, 8))
                     // .chain(Direction::range(Direction::Right, 8))
                     .collect()
             }
