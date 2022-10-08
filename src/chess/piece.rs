@@ -35,16 +35,20 @@ impl Add<Direction> for usize {
     fn add(self, rhs: Direction) -> Self::Output {
         let target = self as isize + rhs.value() as isize;
 
-        let self_rank = self / 8;
-        let target_rank = (target / 8).abs() as usize;
-
+        let self_rank = Piece::get_rank(self);
+        let target_rank = Piece::get_rank(target.abs() as usize);
+        let self_diag = Piece::get_diagonal(self);
+        let target_diag = Piece::get_diagonal(target.abs() as usize);
         println!(
-            "{:?} + {:?} = {} [selfrank: {}, trank: {}]",
+            "{:?} + {:?} = {} [selfrank: {}, trank: {}, selfdiago: {:?}, tardiago: {:?}]",
             self,
             rhs,
             target,
-            self / 8,
-            target / 8
+            Piece::get_rank(self),
+            Piece::get_rank(target.abs() as usize),
+            Piece::get_diagonal(self), Piece::get_diagonal(target.abs() as usize)
+            // self / 8,
+            // target / 8
         );
 
         // if direction becomes negative,
@@ -52,6 +56,8 @@ impl Add<Direction> for usize {
         if target < 0
             || target >= 64
             || (rhs == Direction::Left || rhs == Direction::Right) && self_rank != target_rank
+            || (rhs == Direction::UpLeft || rhs == Direction::UpRight || rhs == Direction::DownLeft || rhs == Direction::DownRight) && 
+              (self_diag.0.abs_diff(target_diag.0) != 1 || self_diag.1.abs_diff(target_diag.1) != 1 )
         {
             None
         } else {
@@ -89,6 +95,18 @@ impl Direction {
         }
     }
 
+    pub fn range_comb(dir: Vec<Direction>, i: usize) -> Vec<Vec<Direction>> {
+        let combination: &mut Vec<Direction> = &mut Vec::new();
+        let mut combinations: Vec<Vec<Direction>> = Vec::new();
+
+        for _ in 1..i {
+            combination.extend(&dir);
+            combinations.push(combination.clone());
+        }
+        combinations
+        // todo!()
+        // (1..i).into_iter().map(|i| vec![dir; i]).collect()
+    }
     pub fn range(dir: Direction, i: usize) -> Vec<Vec<Direction>> {
         (1..i).into_iter().map(|i| vec![dir; i]).collect()
     }
@@ -139,6 +157,18 @@ impl Piece {
         Piece { class, color }
     }
 
+    pub fn get_rank(board_index: usize) -> usize {
+      board_index/8
+    }
+
+    pub fn get_file(board_index: usize) -> usize {
+      board_index % 8
+    }
+
+    pub fn get_diagonal(board_index: usize) -> (usize, usize) {
+      (Piece::get_file(board_index), Piece::get_rank(board_index))
+    }
+
     pub fn is(&self, class: P) -> bool {
         self.class == class
     }
@@ -162,6 +192,10 @@ impl Piece {
         self.is(P::Knight)
     }
 
+    pub fn is_color(&self, color: Color) -> bool {
+      self.color == color
+    }
+
     pub fn symbol(&self) -> &str {
         match (self.color, self.class) {
             (Color::White, P::Pawn) => "♙",
@@ -182,33 +216,81 @@ impl Piece {
         }
     }
 
-    pub fn get_paths(&self, board: &Board) -> Vec<Vec<Direction>> {
+    pub fn get_paths(&self, index: usize, board: &Board) -> Vec<Vec<Direction>> {
         match self.class {
             P::Pawn => {
-                vec![
-                    vec![Direction::Up, Direction::Repeat],
-                    vec![Direction::Down, Direction::Repeat],
-                    vec![Direction::Left, Direction::Repeat],
-                    vec![Direction::Right, Direction::Repeat],
-                ]
+              let piece = board.get_index(index).unwrap();
+              let rank = Piece::get_rank(index);
+              let first_move: bool = 
+                piece.is_color(Color::White) && rank == 7 ||
+                piece.is_color(Color::Black) && rank == 1;
+              
+              let dir = match piece.color {
+                Color::Black => Direction::Down,
+                Color::White => Direction::Up,
+              };
+
+              vec![
+                  vec![dir],
+                  if first_move { vec![dir, dir] } else { vec![] },
+                  // if board
+              ]
             }
-            P::Queen => {
-                // (1..8).into_iter().map(|i| {
-                // vec![Direction::Up; i]
-                // }).collect()
-                vec![]
-                    .into_iter()
-                    .chain(Direction::range(Direction::Down, 8))
-                    .chain(Direction::range(Direction::Up, 8))
-                    .chain(Direction::range(Direction::Left, 8))
-                    .chain(Direction::range(Direction::Right, 8))
-                    .chain(Direction::range(Direction::UpRight, 8))
-                    .chain(Direction::range(Direction::UpLeft, 8))
-                    .chain(Direction::range(Direction::DownRight, 8))
-                    .chain(Direction::range(Direction::DownLeft, 8))
-                    // .chain(Direction::range(Direction::Right, 8))
-                    .collect()
-            }
+            P::King => vec![
+                vec![Direction::Up, Direction::Repeat],
+                vec![Direction::Down, Direction::Repeat],
+                vec![Direction::Left, Direction::Repeat],
+                vec![Direction::Right, Direction::Repeat],
+            ],
+            P::Rook => vec![]
+                .into_iter()
+                .chain(Direction::range(Direction::Down, 8))
+                .chain(Direction::range(Direction::Up, 8))
+                .chain(Direction::range(Direction::Left, 8))
+                .chain(Direction::range(Direction::Right, 8))
+                .collect(),
+            P::Bishop => vec![]
+                .into_iter()
+                .chain(Direction::range_comb(
+                    vec![Direction::UpRight],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::UpLeft],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::DownRight],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::DownLeft],
+                    8,
+                ))
+                .collect(),
+            P::Queen => vec![]
+                .into_iter()
+                .chain(Direction::range(Direction::Down, 8))
+                .chain(Direction::range(Direction::Up, 8))
+                .chain(Direction::range(Direction::Left, 8))
+                .chain(Direction::range(Direction::Right, 8))
+                .chain(Direction::range_comb(
+                    vec![Direction::UpRight],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::UpLeft],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::DownRight],
+                    8,
+                ))
+                .chain(Direction::range_comb(
+                    vec![Direction::DownLeft],
+                    8,
+                ))
+                .collect(),
             P::Knight => {
                 vec![
                     vec![Direction::Up, Direction::Up, Direction::Left],

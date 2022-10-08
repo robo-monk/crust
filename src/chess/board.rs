@@ -7,10 +7,10 @@ pub struct Move {
 
 #[derive(Debug, Clone)]
 pub struct Board {
-    turn: Color,
-    move_count: u64,
+    pub turn: Color,
+    pub move_count: u64,
     squares: [Option<Piece>; 64],
-    en_passant: Option<usize>,
+    pub en_passant: Option<usize>,
 }
 
 impl Board {
@@ -90,7 +90,7 @@ impl Board {
             return vec![];
         }
 
-        let paths = piece.get_paths(&self);
+        let paths = piece.get_paths(index, &self);
 
         paths
             .iter()

@@ -19,13 +19,24 @@ fn main() {
     // dbg!(board.get_available_moves("b1"));
     board.print_available_moves("b8");
     board.make_move("b8", "d7");
-    board.print_available_moves("b1");
+    // board.print_available_moves("b1"); // knight moves
     board.make_move("b1", "c3");
-    board.print_available_moves("d7");
-    // board.print_available_moves("d1");
+    // board.print_available_moves("d7"); // knight moves
+
     board.make_move("g8", "f6");
     board.make_move("d1", "e2");
-    board.print_available_moves("d5");
+    board.print_available_moves("d5"); // queen moves
+
+    board.make_move("e7", "e6");
+    board.print_available_moves("e2"); // queen moves
+    // board.make_move("e7", "e6");
+    board.make_move("e2", "e5");
+    board.print_available_moves("b7"); // pawn moves
+    board.make_move("b7", "b5");
+    board.make_move("d2", "d3");
+    board.print_available_moves("b5"); // pawn moves
+    board.make_move("b5", "b4");
+    board.print_available_moves("f1"); // pawn moves
     // board.print_available_moves("b1");
 
     // board.print_available_moves("g1")
