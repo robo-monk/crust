@@ -14,14 +14,14 @@ fn main() {
     board.make_move("e4", "d5");
     board.make_move("d8", "d5");
     board.make_move("a2", "a3");
-    // board.print();
+    // // board.print();
 
-    // dbg!(board.get_available_moves("b1"));
+    // // dbg!(board.get_available_moves("b1"));
     board.print_available_moves("b8");
     board.make_move("b8", "d7");
-    // board.print_available_moves("b1"); // knight moves
+    // // board.print_available_moves("b1"); // knight moves
     board.make_move("b1", "c3");
-    // board.print_available_moves("d7"); // knight moves
+    // // board.print_available_moves("d7"); // knight moves
 
     board.make_move("g8", "f6");
     board.make_move("d1", "e2");
@@ -29,7 +29,6 @@ fn main() {
 
     board.make_move("e7", "e6");
     board.print_available_moves("e2"); // queen moves
-    // board.make_move("e7", "e6");
     board.make_move("e2", "e5");
     board.print_available_moves("b7"); // pawn moves
     board.make_move("b7", "b5");
@@ -40,6 +39,14 @@ fn main() {
     board.make_move("f1", "c4");
     board.make_move("f8", "a4");
     board.print_available_moves("c4"); // bishiop moves
+
+    let moves = board.get_all_possible_moves();
+
+    // moves.len()
+    // for m in moves {
+        // board._make_move()
+    // }
+    println!("total moves possible {:?} [len: {:?}]", moves, moves.len());
     // board.make_move("b5", "b4");
     // board.print_available_moves("b1");
 

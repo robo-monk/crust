@@ -17,7 +17,7 @@ impl Shr for Piece {
 impl BitXor for Piece {
     type Output = bool;
     fn bitxor(self, rhs: Self) -> Self::Output {
-        println!("XXXXXXXXXXXXXXXXXXXXXOR {:?} {:?}", self, rhs);
+        // println!("XXXXXXXXXXXXXXXXXXXXXOR {:?} {:?}", self, rhs);
         self.color != rhs.color
     }
 }
@@ -40,17 +40,17 @@ impl Add<Direction> for usize {
         let target_rank = Piece::get_rank(target.abs() as usize);
         let self_diag = Piece::get_diagonal(self);
         let target_diag = Piece::get_diagonal(target.abs() as usize);
-        println!(
-            "{:?} + {:?} = {} [selfrank: {}, trank: {}, selfdiago: {:?}, tardiago: {:?}]",
-            self,
-            rhs,
-            target,
-            Piece::get_rank(self),
-            Piece::get_rank(target.abs() as usize),
-            Piece::get_diagonal(self),
-            Piece::get_diagonal(target.abs() as usize) // self / 8,
-                                                       // target / 8
-        );
+        // println!(
+        //     "{:?} + {:?} = {} [selfrank: {}, trank: {}, selfdiago: {:?}, tardiago: {:?}]",
+        //     self,
+        //     rhs,
+        //     target,
+        //     Piece::get_rank(self),
+        //     Piece::get_rank(target.abs() as usize),
+        //     Piece::get_diagonal(self),
+        //     Piece::get_diagonal(target.abs() as usize) // self / 8,
+        //                                                // target / 8
+        // );
 
         // if direction becomes negative,
         // it cannot be added because the piece is going out of bounds
@@ -128,9 +128,6 @@ pub enum Direction {
     DownLeft,
     DownRight,
 
-    Repeat, // special direction
-            // used to repeat the previous direction
-            // in contexes like a vec![Direction::Up, Direction::Repeat]
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -226,7 +223,7 @@ impl Piece {
             P::Pawn => {
                 let piece = board.get_index(index).unwrap();
                 let rank = Piece::get_rank(index);
-                let first_move: bool = piece.is_color(Color::White) && rank == 7
+                let first_move: bool = piece.is_color(Color::White) && rank == 6
                     || piece.is_color(Color::Black) && rank == 1;
 
                 let dir = match piece.color {
@@ -241,10 +238,10 @@ impl Piece {
                 }
             }
             P::King => vec![
-                vec![Direction::Up, Direction::Repeat],
-                vec![Direction::Down, Direction::Repeat],
-                vec![Direction::Left, Direction::Repeat],
-                vec![Direction::Right, Direction::Repeat],
+                vec![Direction::Up],
+                vec![Direction::Down],
+                vec![Direction::Left],
+                vec![Direction::Right],
             ],
             P::Rook => vec![]
                 .into_iter()

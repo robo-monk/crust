@@ -1,8 +1,9 @@
 use super::piece::{Color, Direction, Piece, P};
 
+#[derive(Debug, Clone)]
 pub struct Move {
-    from: usize,
-    to: usize,
+    pub from: usize,
+    pub target: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +40,20 @@ impl Board {
             .to_digit(10)
             .unwrap_or_else(|| panic!("invalid square")); // 1-8
         Some(((8 - rank) * 8 + file) as usize)
+    }
+
+    pub fn get_all_possible_moves(&mut self) -> Vec<Move> {
+      let mut moves: Vec<Move> = Vec::new();
+      for i in 0..64 {
+        // moves.iter().chain(self._get_available_moves(i))
+        if self.squares[i].is_some() {
+          dbg!(self.squares[i]);
+          moves.append(&mut self._get_available_moves(i));
+        }
+        // s.get
+        // moves.push(s)
+      }
+      moves
     }
 
     pub fn get_index(&self, index: usize) -> Option<Piece> {
@@ -81,8 +96,13 @@ impl Board {
     }
 
     // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
-    pub fn get_available_moves(&self, notation: &str) -> Vec<usize> {
+    pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
         let index = Board::parse_notation(&notation.to_string()).unwrap();
+        self._get_available_moves(index)
+    }
+    // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
+    pub fn _get_available_moves(&self, index: usize) -> Vec<Move> {
+        // let index = Board::parse_notation(&notation.to_string()).unwrap();
         let piece = self.squares[index].unwrap();
         // let piece = self.get_square(&notation.to_string()).unwrap_or_else(|| panic!("can't get moves of not a piece"));
 
@@ -132,11 +152,11 @@ impl Board {
                     // if piece can't land on the final target piece, burn the path
                 }
 
-                println!("targe> {:?}", target);
+                if target.is_some() { println!("SQ> {:?}", target) };
                 target
             })
             .filter(|target| target.is_some())
-            .map(|target| target.unwrap())
+            .map(|target| Move {from: index, target: target.unwrap() })
             .collect()
     }
 
@@ -149,7 +169,7 @@ impl Board {
         // let board: &mut Board = &clone;
 
         moves.iter().for_each(|t| {
-            board._set_square(*t as usize, Some(Piece::new(P::Preview, Color::White)));
+            board._set_square(t.target, Some(Piece::new(P::Preview, Color::White)));
         });
         board.print()
     }
