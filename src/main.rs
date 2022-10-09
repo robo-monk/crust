@@ -30,15 +30,15 @@ fn main() {
     board.make_move("e7", "e6");
     board.print_available_moves("e2"); // queen moves
     board.make_move("e2", "e5");
-    board.print_available_moves("b7"); // pawn moves
+    // board.print_available_moves("b7"); // pawn moves
     board.make_move("b7", "b5");
     board.make_move("d2", "d4");
-    board.print_available_moves("b5"); // pawn moves
+    // board.print_available_moves("b5"); // pawn moves
     board.make_move("b5", "b4");
-    board.print_available_moves("f1"); // bishiop moves
+    // board.print_available_moves("f1"); // bishiop moves
     board.make_move("f1", "c4");
     board.make_move("f8", "a4");
-    board.print_available_moves("c4"); // bishiop moves
+    // board.print_available_moves("c4"); // bishiop moves
 
     // let moves = board.get_all_possible_moves();
 
@@ -49,7 +49,6 @@ fn main() {
 
     fn count_deep_moves(board: &Board, depth: usize) -> usize {
         if depth <= 0 { return 0 }
-
 
         let moves = board.get_all_possible_moves();
         let mut move_count = moves.len();
@@ -64,7 +63,7 @@ fn main() {
         // moves.len()
     }
 
-    let c = count_deep_moves(&board.clone(), 3);
+    let c = count_deep_moves(&board.clone(), 4);
     println!("count is {c}");
 
     // moves.len()

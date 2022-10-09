@@ -127,7 +127,6 @@ pub enum Direction {
     UpRight,
     DownLeft,
     DownRight,
-
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -198,6 +197,14 @@ impl Piece {
         self.color == color
     }
 
+    pub fn is_sliding(&self) -> bool {
+        self.is_bishop() || self.is_rook() || self.is_queen()
+    }
+
+    pub fn can_capture(&self, other: &Piece) -> bool {
+      self.color != other.color && !other.is_king()
+    }
+
     pub fn symbol(&self) -> &str {
         match (self.color, self.class) {
             (Color::White, P::Pawn) => "♙",
@@ -243,31 +250,28 @@ impl Piece {
                 vec![Direction::Left],
                 vec![Direction::Right],
             ],
-            P::Rook => vec![]
-                .into_iter()
-                .chain(Direction::range(Direction::Down, 8))
-                .chain(Direction::range(Direction::Up, 8))
-                .chain(Direction::range(Direction::Left, 8))
-                .chain(Direction::range(Direction::Right, 8))
-                .collect(),
-            P::Bishop => vec![]
-                .into_iter()
-                .chain(Direction::range_comb(vec![Direction::UpRight], 8))
-                .chain(Direction::range_comb(vec![Direction::UpLeft], 8))
-                .chain(Direction::range_comb(vec![Direction::DownRight], 8))
-                .chain(Direction::range_comb(vec![Direction::DownLeft], 8))
-                .collect(),
-            P::Queen => vec![]
-                .into_iter()
-                .chain(Direction::range(Direction::Down, 8))
-                .chain(Direction::range(Direction::Up, 8))
-                .chain(Direction::range(Direction::Left, 8))
-                .chain(Direction::range(Direction::Right, 8))
-                .chain(Direction::range_comb(vec![Direction::UpRight], 8))
-                .chain(Direction::range_comb(vec![Direction::UpLeft], 8))
-                .chain(Direction::range_comb(vec![Direction::DownRight], 8))
-                .chain(Direction::range_comb(vec![Direction::DownLeft], 8))
-                .collect(),
+            P::Rook => vec![
+                vec![Direction::Up],
+                vec![Direction::Down],
+                vec![Direction::Left],
+                vec![Direction::Right],
+            ],
+            P::Bishop => vec![
+                vec![Direction::UpRight],
+                vec![Direction::UpLeft],
+                vec![Direction::DownRight],
+                vec![Direction::DownLeft],
+            ],
+            P::Queen => vec![
+                vec![Direction::Down],
+                vec![Direction::Up],
+                vec![Direction::Left],
+                vec![Direction::Right],
+                vec![Direction::UpRight],
+                vec![Direction::UpLeft],
+                vec![Direction::DownRight],
+                vec![Direction::DownLeft],
+            ],
             P::Knight => {
                 vec![
                     vec![Direction::Up, Direction::Up, Direction::Left],

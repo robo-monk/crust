@@ -43,17 +43,17 @@ impl Board {
     }
 
     pub fn get_all_possible_moves(&self) -> Vec<Move> {
-      let mut moves: Vec<Move> = Vec::new();
-      for i in 0..64 {
-        // moves.iter().chain(self._get_available_moves(i))
-        if self.squares[i].is_some() {
-          dbg!(self.squares[i]);
-          moves.append(&mut self._get_available_moves(i));
+        let mut moves: Vec<Move> = Vec::new();
+        for i in 0..64 {
+            // moves.iter().chain(self._get_available_moves(i))
+            if self.squares[i].is_some() {
+                // dbg!(self.squares[i]);
+                moves.append(&mut self._get_available_moves(i));
+            }
+            // s.get
+            // moves.push(s)
         }
-        // s.get
-        // moves.push(s)
-      }
-      moves
+        moves
     }
 
     pub fn get_index(&self, index: usize) -> Option<Piece> {
@@ -73,7 +73,7 @@ impl Board {
     }
 
     pub fn push_move(&mut self, m: &Move) -> () {
-      self._make_move(m.from, m.target);
+        self._make_move(m.from, m.target);
     }
 
     // pub fn _make_move(&mut self, from: &String, to: &String) -> () {
@@ -105,7 +105,6 @@ impl Board {
         self._make_move(_from, _to);
     }
 
-
     // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
     pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
         let index = Board::parse_notation(&notation.to_string()).unwrap();
@@ -123,11 +122,40 @@ impl Board {
 
         let paths = piece.get_paths(index, &self);
 
-        paths
-            .iter()
-            .map(|path| {
-                // the sum of all of the elements of the array
-                let mut target = Some(index);
+        let mut square_targets: Vec<usize> = vec![];
+
+        paths.iter().for_each(|path| {
+            let mut target = Some(index);
+
+            if piece.is_sliding() {
+                // println!("path is {path:?}");
+                let direction = path.get(0);
+
+                loop {
+                    target = target.unwrap() + *direction.unwrap();
+
+                    // if target is out of bounds, exit
+                    if target.is_none() {
+                        break;
+                    }
+
+                    let _target_piece = self.squares[target.unwrap()];
+
+                    // if target has a piece, make some checks
+                    if _target_piece.is_some() {
+                        let target_piece = _target_piece.unwrap();
+
+                        // if piece can be capture, add the target to square targets and exit
+                        if piece.can_capture(&target_piece) {
+                            square_targets.push(target.unwrap());
+                        }
+
+                        break;
+                    } else {
+                        square_targets.push(target.unwrap());
+                    }
+                }
+            } else {
                 for (i, direction) in path.iter().enumerate() {
                     target = target.unwrap() + *direction;
                     if target.is_none() {
@@ -143,31 +171,38 @@ impl Board {
 
                         if !(piece >> target_piece) || i == path.len() - 1 {
                             if piece ^ target_piece {
-                                println!("CAN EAT> {:?}", target_piece);
+                                // println!("CAN EAT> {:?}", target_piece);
+                                square_targets.push(target.unwrap());
                             } else {
                                 target = None;
                             }
-
                             break;
                         }
                     }
-
-                    // if self.get_index(target.unwrap()).unwrap()
                 }
+
+                // if self.get_index(target.unwrap()).unwrap()
 
                 if target.is_some() && self.squares[target.unwrap()].is_some() {
                     let _target_piece = self.squares[target.unwrap()];
                     let target_piece = _target_piece.unwrap();
-                    println!("targepiel> {:?}", target_piece);
+                    // println!("targepiel> {:?}", target_piece);
 
                     // if piece can't land on the final target piece, burn the path
                 }
 
-                if target.is_some() { println!("SQ> {:?}", target) };
-                target
+                if target.is_some() {
+                    square_targets.push(target.unwrap());
+                };
+            }
+        });
+
+        square_targets
+            .iter()
+            .map(|target| Move {
+                from: index,
+                target: *target,
             })
-            .filter(|target| target.is_some())
-            .map(|target| Move {from: index, target: target.unwrap() })
             .collect()
     }
 
