@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::piece::{Color, Direction, Piece, P};
 
 #[derive(Debug, Clone)]
@@ -11,7 +13,16 @@ pub struct Board {
     pub turn: Color,
     pub move_count: u64,
     squares: [Option<Piece>; 64],
+    pieces: HashMap<u8, Piece>,
     pub en_passant: Option<usize>,
+    white_cr: CastlingRights,
+    black_cr: CastlingRights,
+}
+
+#[derive(Debug, Clone)]
+struct CastlingRights {
+    queen: bool,
+    king: bool,
 }
 
 impl Board {
@@ -19,9 +30,18 @@ impl Board {
         Board {
             turn: Color::White,
             move_count: 0,
+            pieces: HashMap::new(),
             // squares: [Some(Piece::new(P::Pawn, Color::White)); 64]
             squares: [None; 64],
             en_passant: None,
+            white_cr: CastlingRights {
+                queen: true,
+                king: true,
+            },
+            black_cr: CastlingRights {
+                queen: true,
+                king: true,
+            },
         }
     }
 
@@ -44,12 +64,10 @@ impl Board {
 
     pub fn get_all_possible_moves(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
-        for i in 0..64 {
+        for (i, piece) in self.pieces.iter() {
             // moves.iter().chain(self._get_available_moves(i))
-            if self.squares[i].is_some() {
-                // dbg!(self.squares[i]);
-                moves.append(&mut self._get_available_moves(i));
-            }
+            // dbg!(self.squares[i]);
+            moves.append(&mut self._get_available_moves(piece, *i as usize));
             // s.get
             // moves.push(s)
         }
@@ -80,10 +98,96 @@ impl Board {
     pub fn _make_move(&mut self, from: usize, to: usize) -> () {
         // let piece = self.get_square(from);
         let piece = self.squares[from];
+        let target_piece = self.squares[to];
 
         if piece.is_none() {
             panic!("invalid move")
             // return
+        }
+
+        // special rules
+        match piece.unwrap().class {
+            P::Pawn => {
+                // en passant
+                if self.en_passant.is_some() && to == self.en_passant.unwrap() {
+                    match piece.unwrap().color {
+                        Color::White => {
+                            self._set_square(
+                                (to + Direction::Up)
+                                    .unwrap_or_else(|| panic!("invalid en passant move")),
+                                None,
+                            );
+                            // self.white_cr.king = false;
+                            // self.white_cr.queen = false;
+                        }
+                        Color::Black => {
+                            self.black_cr.king = false;
+                            self.black_cr.queen = false;
+                        }
+                    }
+                }
+            }
+            P::King => {
+                // if king moved no castling rights
+                match piece.unwrap().color {
+                    Color::White => {
+                        self.white_cr.king = false;
+                        self.white_cr.queen = false;
+
+                        // king side castle
+                        if to == 6 {
+                            self._set_square(5, self.get_index(7));
+                            self._set_square(7, None);
+                        }
+
+                        if to == 2 {
+                            self._set_square(3, self.get_index(0));
+                            self._set_square(0, None);
+                        }
+                    }
+                    Color::Black => {
+                        self.black_cr.king = false;
+                        self.black_cr.queen = false;
+                    }
+                }
+            }
+            P::Rook => {
+                // if rook moved no castling rights for that side
+                if from == 0 {
+                    self.black_cr.queen = false
+                }
+                if from == 7 {
+                    self.black_cr.king = false
+                }
+                if from == 56 {
+                    self.white_cr.queen = false
+                }
+                if from == 63 {
+                    self.white_cr.king = false
+                }
+            }
+            _ => (),
+        }
+
+        if target_piece.is_some() {
+            match target_piece.unwrap().class {
+                P::Rook => {
+                    // if rook that got captured no castling rights for that side
+                    if from == 0 {
+                        self.black_cr.queen = false
+                    }
+                    if from == 7 {
+                        self.black_cr.king = false
+                    }
+                    if from == 56 {
+                        self.white_cr.queen = false
+                    }
+                    if from == 63 {
+                        self.white_cr.king = false
+                    }
+                }
+                _ => (),
+            }
         }
 
         self._set_square(to, piece);
@@ -108,12 +212,31 @@ impl Board {
     // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
     pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
         let index = Board::parse_notation(&notation.to_string()).unwrap();
-        self._get_available_moves(index)
+        self._get_available_moves(self.pieces.get(&(index as u8)).unwrap(), index)
     }
+
+    pub fn count_ply_moves(&self, depth: usize) -> usize {
+        if depth <= 0 {
+            return 1;
+        }
+
+        let moves = self.get_all_possible_moves();
+        // let mut move_count = moves.len();
+        let mut move_count = 0;
+
+        for m in &moves {
+            let mut _board = self.clone();
+            _board.push_move(m);
+            move_count += self.count_ply_moves(depth - 1);
+        }
+
+        move_count
+    }
+
     // pub fn get_available_moves(&self, notation: &str) -> Vec<Move> {
-    pub fn _get_available_moves(&self, index: usize) -> Vec<Move> {
+    pub fn _get_available_moves(&self, piece: &Piece, index: usize) -> Vec<Move> {
         // let index = Board::parse_notation(&notation.to_string()).unwrap();
-        let piece = self.squares[index].unwrap();
+        // let piece = self.squares[index].unwrap();
         // let piece = self.get_square(&notation.to_string()).unwrap_or_else(|| panic!("can't get moves of not a piece"));
 
         if piece.color != self.turn {
@@ -129,10 +252,10 @@ impl Board {
 
             if piece.is_sliding() {
                 // println!("path is {path:?}");
-                let direction = path.get(0);
+                let direction = *path.get(0).unwrap();
 
                 loop {
-                    target = target.unwrap() + *direction.unwrap();
+                    target = target.unwrap() + direction;
 
                     // if target is out of bounds, exit
                     if target.is_none() {
@@ -169,8 +292,8 @@ impl Board {
 
                         // if piece can't land (if final step ) or pass through the next step piece, burn the path
 
-                        if !(piece >> target_piece) || i == path.len() - 1 {
-                            if piece ^ target_piece {
+                        if !(*piece >> target_piece) || i == path.len() - 1 {
+                            if *piece ^ target_piece {
                                 // println!("CAN EAT> {:?}", target_piece);
                                 square_targets.push(target.unwrap());
                             } else {
@@ -179,16 +302,6 @@ impl Board {
                             break;
                         }
                     }
-                }
-
-                // if self.get_index(target.unwrap()).unwrap()
-
-                if target.is_some() && self.squares[target.unwrap()].is_some() {
-                    let _target_piece = self.squares[target.unwrap()];
-                    let target_piece = _target_piece.unwrap();
-                    // println!("targepiel> {:?}", target_piece);
-
-                    // if piece can't land on the final target piece, burn the path
                 }
 
                 if target.is_some() {
@@ -233,17 +346,40 @@ impl Board {
         let halfmoves = fields[4]; // Halfmove clock: The number of halfmoves since the last capture or pawn advance, used for the fifty-move rule.[9]
         let move_count = fields[5];
 
-        let mut board = Board {
-            turn: match active_color {
-                "w" => Color::White,
-                "b" => Color::Black,
-                _ => panic!("invalid fen"),
-            },
-            move_count: move_count.parse::<u64>().unwrap(),
-            squares: [None; 64],
-            en_passant: Board::parse_notation(&en_passant.to_string()),
+        // let mut board = Board {
+        let mut board = Board::new();
+
+        board.turn = match active_color {
+            "w" => Color::White,
+            "b" => Color::Black,
+            _ => panic!("invalid fen"),
         };
 
+        board.move_count = move_count.parse::<u64>().unwrap();
+        board.en_passant = Board::parse_notation(&en_passant.to_string());
+
+				// parse castling rights
+        castling.chars().for_each(|c| {
+            let color = if c.is_lowercase() {
+                Color::Black
+            } else {
+                Color::White
+            };
+
+            let side: P = match c.to_lowercase().to_string().as_str() {
+                "k" => P::King,
+                "q" => P::Queen,
+                _ => panic!("invalid fen when parsing castling rights"),
+            };
+
+						match (color, side) {
+							(Color::White, P::King) => board.white_cr.king = true,
+							(Color::White, P::Queen) => board.white_cr.queen = true,
+							(Color::Black, P::King) => board.black_cr.king = true,
+							(Color::Black, P::Queen) => board.black_cr.queen = true,
+							_ => panic!("invalid fen when parsing cr")
+						}
+        });
         // parse placement data
         let mut index: usize = 0;
         piece_placement_data.split("/").for_each(|rank| {
@@ -268,7 +404,9 @@ impl Board {
                         _ => panic!("invalid fen"),
                     };
 
-                    board.squares[index] = Some(Piece::new(class, color));
+                    let piece = Piece::new(class, color);
+                    board.squares[index] = Some(piece);
+                    board.pieces.insert(index as u8, piece);
                     println!("laying to i {}: color: {:?} cls: {:?}", index, color, class);
                     index += 1;
                 }

@@ -61,6 +61,9 @@ fn main() {
 
     // let a = board.get_square(&"E2".to_string());
     // dbg!(a);
+    let ply = 5;
+    let count = board.count_ply_moves(ply);
+    println!("count_ply_moves({ply}) -> {count}");
 }
 
 // #[cfg(test)]
@@ -77,32 +80,13 @@ macro_rules! hashmap {
 fn rules_are_right() {
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     let mut board = Board::from_fen(&fen);
-    fn count_deep_moves(board: &Board, depth: usize) -> usize {
-        if depth <= 0 {
-            return 1;
-        }
-
-        let moves = board.get_all_possible_moves();
-        // let mut move_count = moves.len();
-        let mut move_count = 0;
-
-        for m in &moves {
-            let mut _board = board.clone();
-            _board.push_move(m);
-            move_count += count_deep_moves(&_board, depth - 1);
-        }
-
-        move_count
-        // moves.len()
-    }
-
-    let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609, 6 => 119060324 ];
+    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609, 6 => 119060324 ];
+    let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609 ];
+    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281];
 
     for (ply, expected_count) in plys_count.iter() {
-        let count = count_deep_moves(&board.clone(), *ply);
+        let count = board.count_ply_moves(*ply);
         assert_eq!(count, *expected_count as usize, "ply {ply} should be {expected_count} but was {count}");
     }
-    // for i in 1..7 {
-    // }
 }
 // }
