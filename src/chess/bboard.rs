@@ -4,9 +4,12 @@ use super::board::{Board};
 
 const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
 const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
+
 const RANK_1: u64 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000;
-const RANK_3: u64 = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000;
+
+const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000;
+const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
@@ -37,7 +40,7 @@ fn file_mask(sq: &u64) -> u64 {
 //    return (maindia >> sout) << nort;
 // }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BBoard {
     white: [u64; 7],
     black: [u64; 7],
@@ -178,7 +181,8 @@ impl BBoard {
       let moves = self.get_available_captures(piece);
       // let bb =  self.get_bboard_of_piece(piece); 
       // let preview = self.get_bboard_of_piece(&Piece::new(P::Preview, piece.color));
-      self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
+      // self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
+      self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| {
         bb | moves
         // A_FILE
         // RANK_1
@@ -189,23 +193,23 @@ impl BBoard {
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
       let bb = self.get_bboard_of_piece(&piece); 
 
-      let us_bitmap = self.white.iter().fold(0, |bb, pice_bb| bb | pice_bb);
-      let them_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
-      //  iter.reduce(|accum, item| {
-        // if accum >= item { accum } else { item }
-    // })
+      let us_bitmap = (match piece.color { Color::White => self.white, Color::Black => self.black }).iter().fold(0, |bb, pice_bb| bb | pice_bb);
+      let them_bitmap = (match piece.color { Color::White => self.black, Color::Black => self.white }).iter().fold(0, |bb, pice_bb| bb | pice_bb);
 
       match piece.class {
         P::Pawn => {
           // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
           // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
           // let attacks = (bb >> 8 & !A_FILE); // moves forward
+          let c = if piece.color == Color::Black { -1 } else { 1 };
           let attacks = 
             // ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
-            ((bb >> 9 & !A_FILE) | (bb >> 7 & !H_FILE)) & them_bitmap;// moves forward
+            ((bb >> 9*c & !A_FILE) | (bb >> 7*c & !H_FILE)) & them_bitmap;// moves forward
+
+          let first_move_rank = (if piece.color== Color::Black {RANK_7} else {RANK_2});
 
           let moves = 
-            ((bb >> 8) | (bb & RANK_2) >> 16) & !them_bitmap;// moves forward
+            ((bb >> 8*c) | (bb & first_move_rank) >> 16) & !them_bitmap;// moves forward
         
           println!("not moved pawns {:64b}", (bb & RANK_1));
           println!("attacks {attacks:64b}");
@@ -276,6 +280,9 @@ impl BBoard {
               sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Right)
             )
           })) & !us_bitmap
+
+          // us_bitmap
+          // them_bitmap
           // indeces.iter().fold(0, |_bb: u64, i: &u64| {
           //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
           //   // println!("rank (5) -> {:64b}", rank_mask(5));
