@@ -35,11 +35,15 @@ fn main() {
     // bboard.get_available_captures(Piece::new(P::Pawn, Color::White));
     // bboard.preview_moves(&Piece::new(P::Pawn, Color::White));
     // bboard.clone().preview_moves(&Piece::new(P::Queen, Color::White));
-    bboard.clone().preview_moves(&Piece::new(P::Queen, Color::Black));
 
-    bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
+    // bboard.clone().preview_moves(&Piece::new(P::Queen, Color::Black));
+    // bboard.pprint();
 
-    bboard.pprint();
+    bboard.clone().preview_moves(&Piece::new(P::Pawn, Color::White));
+
+    // bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
+
+    // bboard.pprint();
     // bboard.place(Piece::new(P::Pawn, Color::White), 4);
     return;
 

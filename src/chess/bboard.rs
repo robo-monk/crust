@@ -1,6 +1,5 @@
+use super::board::Board;
 use super::piece::{Color, Direction, Piece, P};
-use super::board::{Board};
-
 
 const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
 const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
@@ -13,11 +12,42 @@ const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_0000
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
-  0xff << (sq & 56)
+    0xff << (sq & 56)
 }
 
 fn file_mask(sq: &u64) -> u64 {
-  0x0101010101010101 << (sq & 7)
+    0x0101010101010101 << (sq & 7)
+}
+
+fn rotate(i: u64, v: i32) -> u64 {
+    if v.is_negative() {
+        i.rotate_right(v.abs() as u32)
+    } else {
+        i.rotate_left(v as u32)
+    }
+}
+
+fn occluded_fill(mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
+    let r: i32 = direction.value() as i32; // {+-1,7,8,9}
+    pro &= direction.avoid_wrap();
+
+    gen |= pro & rotate(gen, r);
+    pro &= rotate(pro, r);
+    gen |= pro & rotate(gen, 2 * r);
+    pro &= rotate(pro, (2 * r));
+    gen | pro & rotate(gen, (4 * r))
+    // gen
+}
+
+// U64 shiftOne (U64 b, int dir8)
+fn shift_one(b: u64, direction: Direction) -> u64 {
+    let r = direction.value() as i32;
+    rotate(b, r) & direction.avoid_wrap()
+}
+
+fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
+    let fill = occluded_fill(slider, empty, direction);
+    shift_one(fill, direction)
 }
 
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
@@ -55,26 +85,26 @@ impl BBoard {
     }
 
     pub fn parse_sq(n: &str) -> u8 {
-      Board::parse_notation(&n.to_string()).unwrap() as u8 
+        Board::parse_notation(&n.to_string()).unwrap() as u8
     }
     pub fn place(&mut self, piece: Piece, target: u8) {
         self.mutate_bboard_of_piece(&piece, |b: u64| b | 1 << target);
     }
 
     pub fn unplace(&mut self, piece: Piece, index: u8) {
-      print!("unplace> ");
+        print!("unplace> ");
         self.mutate_bboard_of_piece(&piece, |b: u64| b & !(1 << index));
     }
 
     pub fn make_unchecked_move(&mut self, from: u8, to: u8, piece: Piece) {
-      self.unplace(piece, from);
-      self.place(piece, to);
+        self.unplace(piece, from);
+        self.place(piece, to);
     }
 
     pub fn register_unchecked_move(&mut self, from: &str, to: &str, piece: Piece) {
-      self.unplace(piece, BBoard::parse_sq(from));
-      self.place(piece, BBoard::parse_sq(to));
-      // self.place(piece, to);
+        self.unplace(piece, BBoard::parse_sq(from));
+        self.place(piece, BBoard::parse_sq(to));
+        // self.place(piece, to);
     }
 
     // pub fn mutate_bboard_of_piece<F>(&mut self, piece: &Piece, mutation: F) {
@@ -127,30 +157,38 @@ impl BBoard {
         &mut side_bit_boards[piece_bit_board_index as usize]
     }
 
-    pub fn get_piece_indeces(&self, piece: &Piece) -> Vec::<u64>{
-      let mut bb = self.get_bboard_of_piece(&piece).clone();
-      let mut indeces = Vec::new();
+    pub fn get_piece_indeces(&self, piece: &Piece) -> Vec<u64> {
+        let mut bb = self.get_bboard_of_piece(&piece).clone();
+        let mut indeces = Vec::new();
 
-      loop {
-          let index = bb.trailing_zeros();
+        loop {
+            let index = bb.trailing_zeros();
 
-          if index >= 64 {
-              break;
-          }
+            if index >= 64 {
+                break;
+            }
 
-          // switch to zero
-          bb &= !(1 << index);
+            // switch to zero
+            bb &= !(1 << index);
 
-          indeces.push(index as u64);
-      }
+            indeces.push(index as u64);
+        }
 
-      indeces
+        indeces
     }
     pub fn pprint(&mut self) {
-      let mut board: Board = Board::new();
+        let mut board: Board = Board::new();
 
         for color in [Color::Black, Color::White] {
-            for class in [P::Pawn, P::Bishop, P::King, P::Queen, P::Rook, P::Knight, P::Preview] {
+            for class in [
+                P::Pawn,
+                P::Bishop,
+                P::King,
+                P::Queen,
+                P::Rook,
+                P::Knight,
+                P::Preview,
+            ] {
                 let piece = Piece { color, class };
                 let mut bb = self.get_bboard_of_piece(&piece).clone();
                 loop {
@@ -176,146 +214,116 @@ impl BBoard {
         //     bb >>= 1;
         // }
     }
-    
+
     pub fn preview_moves(&mut self, piece: &Piece) {
-      let moves = self.get_available_captures(piece);
-      // let bb =  self.get_bboard_of_piece(piece); 
-      // let preview = self.get_bboard_of_piece(&Piece::new(P::Preview, piece.color));
-      // self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
-      self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| {
-        bb | moves
-        // A_FILE
-        // RANK_1
-      });
-      self.pprint();
+        let moves = self.get_available_captures(piece);
+        // let bb =  self.get_bboard_of_piece(piece);
+        // let preview = self.get_bboard_of_piece(&Piece::new(P::Preview, piece.color));
+        // self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
+        self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| {
+            bb | moves
+            // A_FILE
+            // RANK_1
+        });
+        self.pprint();
     }
 
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
-      let bb = self.get_bboard_of_piece(&piece); 
+        let bb = self.get_bboard_of_piece(&piece);
 
-      let us_bitmap = (match piece.color { Color::White => self.white, Color::Black => self.black }).iter().fold(0, |bb, pice_bb| bb | pice_bb);
-      let them_bitmap = (match piece.color { Color::White => self.black, Color::Black => self.white }).iter().fold(0, |bb, pice_bb| bb | pice_bb);
+        let us_bitmap = (match piece.color {
+            Color::White => self.white,
+            Color::Black => self.black,
+        })
+        .iter()
+        .fold(0, |bb, pice_bb| bb | pice_bb);
+        let them_bitmap = (match piece.color {
+            Color::White => self.black,
+            Color::Black => self.white,
+        })
+        .iter()
+        .fold(0, |bb, pice_bb| bb | pice_bb);
 
-      match piece.class {
-        P::Pawn => {
-          // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
-          // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
-          // let attacks = (bb >> 8 & !A_FILE); // moves forward
-          let c = if piece.color == Color::Black { -1 } else { 1 };
-          let attacks = 
-            // ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
-            ((bb >> 9*c & !A_FILE) | (bb >> 7*c & !H_FILE)) & them_bitmap;// moves forward
+        let empty = !(us_bitmap | them_bitmap);
 
-          let first_move_rank = (if piece.color== Color::Black {RANK_7} else {RANK_2});
+        match piece.class {
+            P::Pawn => {
+                let c = if piece.color == Color::Black { -1 } else { 1 };
+                let attacks = ((bb >> 9 * c & !A_FILE) | (bb >> 7 * c & !H_FILE)) & them_bitmap; // moves forward
 
-          let moves = 
-            ((bb >> 8*c) | (bb & first_move_rank) >> 16) & !them_bitmap;// moves forward
-        
-          println!("not moved pawns {:64b}", (bb & RANK_1));
-          println!("attacks {attacks:64b}");
-          println!("enemy bitmap {them_bitmap:64b}");
-          // attacks | moves
-          // (A_FILE & !self.white[0]) |
-          // (RANK_3 & !self.white[0]) |
-          // (RANK_2 & !self.white[0]) |
-          // (RANK_1 & !self.white[0]) 
-          //   & !(us_bitmap | them_bitmap)
+                let first_move_rank = if piece.color == Color::Black {
+                    RANK_7
+                } else {
+                    RANK_2
+                };
 
-          // rank_mask(2)
-          bb & RANK_2
-          // enemy_bitmap
-        },
+                let moves = ((bb >> 8 * c) | (bb & first_move_rank) >> 16) & !them_bitmap; // moves forward
 
-        P::Queen => {
-          // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
-          //   bb 
-          // }).unwrap()
-          let indeces = self.get_piece_indeces(piece);
+                println!("not moved pawns {:64b}", (bb & RANK_1));
+                println!("attacks {attacks:64b}");
+                println!("enemy bitmap {them_bitmap:64b}");
 
-          // const ROOK_MASK = rank_mask
-          fn rook_mask(sq: &u64) -> u64 {
-            rank_mask(sq) | file_mask(sq)
-          }
+                let fill = occluded_fill(bb, empty, Direction::Down);
+                (fill & moves) | attacks
+                // fill
+                // (A_FILE & !self.white[0]) |
+                // (RANK_3 & !self.white[0]) |
+                // (RANK_2 & !self.white[0]) |
+                // (RANK_1 & !self.white[0])
+                //   & !(us_bitmap | them_bitmap)
 
-          fn rotate(i: u64, v: i32) -> u64{
-            if v.is_negative() {
-              i.rotate_right(v.abs() as u32)
-            } else {
-              i.rotate_left(v as u32)
+                // rank_mask(2)
+                // bb & RANK_2
+                // enemy_bitmap
             }
-          }
-          fn occluded_fill (mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
-            let r: i32 = direction.value() as i32; // {+-1,7,8,9}
-            pro &= direction.avoid_wrap();
 
-            gen |= pro & rotate(gen, r);
-            pro &=       rotate(pro, r);
-            gen |= pro & rotate(gen, 2*r);
-            pro &=       rotate(pro, (2*r));
-            gen | pro & rotate(gen, (4*r))
-            // gen
-          }
+            P::Queen => {
+                // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
+                //   bb
+                // }).unwrap()
+                let indeces = self.get_piece_indeces(piece);
 
-          // U64 shiftOne (U64 b, int dir8)
-          fn shift_one(b: u64, direction: Direction) -> u64 {
-            let r = direction.value() as i32;
-            rotate(b, r) & direction.avoid_wrap()
-          }
+                (indeces.iter().fold(0, |bb: u64, i: &u64| {
+                    let _bb = 1 << i;
+                    bb | (sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpLeft)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpRight)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownRight)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownLeft)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Up)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Down)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Left)
+                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Right))
+                })) & !us_bitmap
 
-          fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
-            let fill = occluded_fill(slider, empty, direction);
-            shift_one(fill, direction)
-          }
+                // us_bitmap
+                // them_bitmap
+                // indeces.iter().fold(0, |_bb: u64, i: &u64| {
+                //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
+                //   // println!("rank (5) -> {:64b}", rank_mask(5));
+                //   // bb | rook_mask(i)
+                //   _bb | get_ocluded_squares(_bb, bb)
+                // })
 
-          (indeces.iter().fold(0, |bb: u64, i: &u64| {
-            let _bb = 1 << i;
-            bb | (
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Up) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Down) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Left) |
-              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Right)
-            )
-          })) & !us_bitmap
+                // get_ocluded_squares(bb, bb)
+                // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
+                // (
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
+                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
+                // ) & !us_bitmap
 
-          // us_bitmap
-          // them_bitmap
-          // indeces.iter().fold(0, |_bb: u64, i: &u64| {
-          //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
-          //   // println!("rank (5) -> {:64b}", rank_mask(5));
-          //   // bb | rook_mask(i)
-          //   _bb | get_ocluded_squares(_bb, bb)
-          // })
+                // *bb
 
-          // get_ocluded_squares(bb, bb)
-          // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
-          // (
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
-          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
-          // ) & !us_bitmap
-
-
-          // *bb
-
-
-          // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
-          //   bb 
-          // }).unwrap()
-
+                // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
+                //   bb
+                // }).unwrap()
+            }
+            _ => todo!(),
         }
-        _ => todo!()
-      }
     }
-
-
-
 }
