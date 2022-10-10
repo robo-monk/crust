@@ -1,4 +1,5 @@
 use super::board::Board;
+use super::bboard::*;
 use std::ops::{Add, BitXor, Mul, Shr, ShrAssign};
 
 // A >> B (can A pass through B?)
@@ -103,6 +104,20 @@ impl Direction {
             // Direction::UpLeft => Direction::Up + Direction::Left, // 7
             // Direction::DownLeft => Direction::Down + Direction::Left, // -9
             // Direction::DownRight => Direction::Down + Direction::Right, // -7
+            _ => panic!("invalid direction"),
+        }
+    }
+
+    pub fn shift_once(&self, b: u64) -> u64 {
+        match self {
+            Direction::UpRight => (b << 9) & !A_FILE,
+            Direction::Right => (b << 1) & !A_FILE,
+            Direction::DownRight => (b >> 7) & !A_FILE,
+            Direction::Down => b >> 8,
+            Direction::DownLeft =>  (b >> 9) & !H_FILE,
+            Direction::Left => (b << 1) & !H_FILE,
+            Direction::UpLeft => (b << 7) & !H_FILE,
+            Direction::Up => b << 8,
             _ => panic!("invalid direction"),
         }
     }
@@ -222,7 +237,7 @@ impl Piece {
     }
 
     pub fn can_capture(&self, other: &Piece) -> bool {
-      self.color != other.color && !other.is_king()
+        self.color != other.color && !other.is_king()
     }
 
     pub fn symbol(&self) -> &str {

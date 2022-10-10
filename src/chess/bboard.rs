@@ -1,14 +1,15 @@
 use super::board::Board;
 use super::piece::{Color, Direction, Piece, P};
 
-const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
-const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
+pub const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
+pub const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
 
-const RANK_1: u64 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
-const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000;
+pub const RANK_1: u64 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
+pub const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000;
 
-const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000;
-const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
+pub const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000;
+pub const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
+
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
@@ -66,6 +67,21 @@ fn rook_attacks(_bb: u64, empty: u64) -> u64 {
 
 fn queen_attacks(_bb: u64, empty: u64) -> u64 {
     bishop_attacks(_bb, empty) | rook_attacks(_bb, empty)
+}
+fn knight_attacks(knights: u64) -> u64 {
+    let l1 = (knights >> 1) & 0x7f7f7f7f7f7f7f7f;
+    let l2 = (knights >> 2) & 0x3f3f3f3f3f3f3f3f;
+    let r1 = (knights << 1) & 0xfefefefefefefefe;
+    let r2 = (knights << 2) & 0xfcfcfcfcfcfcfcfc;
+    let h1 = l1 | r1;
+    let h2 = l2 | r2;
+    (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
+}
+
+fn king_attacks(bb: u64) -> u64 {
+  let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
+  let _bb = bb | attacks;
+  attacks | Direction::Up.shift_once(_bb) | Direction::Down.shift_once(_bb)
 }
 
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
@@ -279,8 +295,8 @@ impl BBoard {
     }
 
     pub fn count_available_moves(&self) -> u32 {
-      let targets = self.get_available_targets(self.turn);
-      targets.iter().fold(0, |count, t| count + t.count_ones())
+        let targets = self.get_available_targets(self.turn);
+        targets.iter().fold(0, |count, t| count + t.count_ones())
     }
 
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
@@ -331,12 +347,11 @@ impl BBoard {
                 // bb & RANK_2
                 // enemy_bitmap
             }
-
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
-            P::King => 0,
+            P::King => king_attacks(bb) & !us_bitmap,
             P::Rook => rook_attacks(bb, empty) & !us_bitmap,
             P::Bishop => bishop_attacks(bb, empty) & !us_bitmap,
-            P::Knight => 0,
+            P::Knight => knight_attacks(bb) & !us_bitmap,
             _ => todo!(),
         }
     }
