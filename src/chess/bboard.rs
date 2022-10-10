@@ -67,38 +67,41 @@ impl BBoard {
         &mut side_bit_boards[piece_bit_board_index as usize]
     }
 
-    pub fn pprint(&self) {
-        let mut bb = self.white[0].clone();
+    pub fn pprint(&mut self) {
+        for color in [Color::White, Color::Black] {
+            for class in [P::Pawn, P::Bishop, P::King, P::Queen] {
+                let piece = Piece { color, class };
+                let mut bb = self.get_bboard_of_piece(&piece).clone();
+                loop {
+                    // let index = bb.trailing_zeros();
+                    // let index = bb.leading_zeros();
+                    // println!("{bb:64b}");
+                    // let index = bb.trailing_zeros();
+                    let index = bb.trailing_zeros();
 
-        for color in [ Color::White, Color::Black ] {
-          for class in [P::Pawn, P::Bishop, P::King, P::King, P::Queen] {
-
-          } 
+                    if index >= 64 {
+                        break;
+                    }
+                    // println!("index > {index}");
+                    // bb &= 1 << index-1; // switch 1 to zero
+                    // bb &= 1 << (64 - (index+1));
+                    bb &= !(1 << index);
+                    dbg!(index, piece);
+                    // println!("{bb:64b}");
+                    // let index = bb.trailing_zeros();
+                    // println!("count of zeros upfron > {index}");
+                    // self.mutate_bboard_of_piece(&piece, move |b: u64| b | 1 << (64 - (target + 1)));
+                    // break;
+                }
+            }
         }
 
-        loop {
-          // let index = bb.trailing_zeros();
-          // let index = bb.leading_zeros();
-          println!("{bb:64b}");
-          // let index = bb.trailing_zeros();
-          let index = bb.trailing_zeros();
-          if index >= 64 { break }
-          println!("index > {index}");
-          // bb &= 1 << index-1; // switch 1 to zero
-          // bb &= 1 << (64 - (index+1));
-          bb &= !(1 << index);
-          println!("{bb:64b}");
-          // let index = bb.trailing_zeros();
-          // println!("count of zeros upfron > {index}");
-        // self.mutate_bboard_of_piece(&piece, move |b: u64| b | 1 << (64 - (target + 1)));
-          // break;
-        }
         // bb.reverse_bits();
         // for i in 0..8 {
         //     // change it to get range
         //     let lsb = bb & 1;
 
-        //     if lsb 
+        //     if lsb
         //     bb >>= 1;
         // }
     }

@@ -18,6 +18,9 @@ fn main() {
     bboard.place(Piece::new(P::Pawn, Color::White), 0);
     bboard.place(Piece::new(P::Pawn, Color::White), 23);
     bboard.place(Piece::new(P::Pawn, Color::White), 40);
+
+    bboard.place(Piece::new(P::Queen, Color::White), 22);
+    bboard.place(Piece::new(P::King, Color::White), 50);
     bboard.place(Piece::new(P::Pawn, Color::White), 63);
     bboard.pprint();
 
