@@ -88,14 +88,28 @@ impl Add<Direction> for usize {
 impl Direction {
     pub fn value(&self) -> i64 {
         match self {
-            Direction::Up => -8,
-            Direction::Down => 8,
+            Direction::Down => -8,
+            Direction::Up => 8,
             Direction::Left => -1,
             Direction::Right => 1,
-            Direction::UpLeft => Direction::Up + Direction::Left,
-            Direction::UpRight => Direction::Up + Direction::Right,
-            Direction::DownLeft => Direction::Down + Direction::Left,
-            Direction::DownRight => Direction::Down + Direction::Right,
+            Direction::UpLeft => Direction::Up + Direction::Left, // 7
+            Direction::UpRight => Direction::Up + Direction::Right, // 9
+            Direction::DownLeft => Direction::Down + Direction::Left, // -9
+            Direction::DownRight => Direction::Down + Direction::Right, // -7
+            _ => panic!("invalid direction"),
+        }
+    }
+
+    pub fn avoid_wrap(&self) -> u64 {
+        match self {
+            Direction::UpRight => 0xfefefefefefefe00,
+            Direction::Right => 0xfefefefefefefefe,
+            Direction::DownRight => 0x00fefefefefefefe,
+            Direction::Down => 0x00ffffffffffffff,
+            Direction::DownLeft => 0x00ffffffffffffff,
+            Direction::Left => 0x7f7f7f7f7f7f7f7f,
+            Direction::UpLeft => 0x7f7f7f7f7f7f7f00,
+            Direction::Up => 0xffffffffffffff00,
             _ => panic!("invalid direction"),
         }
     }

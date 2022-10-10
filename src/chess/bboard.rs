@@ -13,6 +13,10 @@ fn rank_mask(sq: &u64) -> u64 {
   0xff << (sq & 56)
 }
 
+fn file_mask(sq: &u64) -> u64 {
+  0x0101010101010101 << (sq & 7)
+}
+
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
 
 // U64 fileMask(int sq) {return C64(0x0101010101010101) << (sq & 7);}
@@ -198,7 +202,7 @@ impl BBoard {
           // let attacks = (bb >> 8 & !A_FILE); // moves forward
           let attacks = 
             // ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
-            ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
+            ((bb >> 9 & !A_FILE) | (bb >> 7 & !H_FILE)) & them_bitmap;// moves forward
 
           let moves = 
             ((bb >> 8) | (bb & RANK_2) >> 16) & !them_bitmap;// moves forward
@@ -224,11 +228,71 @@ impl BBoard {
           // }).unwrap()
           let indeces = self.get_piece_indeces(piece);
 
-          indeces.iter().fold(0, |bb: u64, i: &u64| {
+          // const ROOK_MASK = rank_mask
+          fn rook_mask(sq: &u64) -> u64 {
+            rank_mask(sq) | file_mask(sq)
+          }
+
+          fn get_ocluded_squares(mut p: u64, bb: u64) -> u64 {
+            let mut g = bb;
+            g |= p & (g <<  8);
+            p &=     (p <<  8);
+            g |= p & (g << 16);
+            p &=     (p << 16);
+            g |= p & (g << 32);
+            return g;
+          }
+
+
+          fn rotate(i: u64, v: i32) -> u64{
+            if v.is_negative() {
+              i.rotate_right(v.abs() as u32)
+            } else {
+              i.rotate_left(v as u32)
+            }
+
+          }
+          fn occludedFill (mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
+            let r: i32 = direction.value() as i32; // {+-1,7,8,9}
+            pro &= direction.avoid_wrap();
+
+            gen |= pro & rotate(gen, r);
+            pro &=       rotate(pro, r);
+            gen |= pro & rotate(gen, 2*r);
+            pro &=       rotate(pro, (2*r));
+            gen | pro & rotate(gen, (4*r))
+            // gen
+          }
+
+          // U64 shiftOne (U64 b, int dir8)
+          fn shift_one(b: u64, direction: Direction) -> u64 {
+            let r = direction.value() as i32;
+            rotate(b, r) & direction.avoid_wrap()
+          }
+
+          fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
+            let fill = occludedFill(slider, empty, direction);
+            shift_one(fill, direction)
+          }
+
+          (indeces.iter().fold(0, |bb: u64, i: &u64| {
             println!("rank ({i}) -> {:064b}", rank_mask(i));
             // println!("rank (5) -> {:64b}", rank_mask(5));
-            bb | (rank_mask(i) & (!(us_bitmap) | them_bitmap))
-          }) 
+            bb | rook_mask(i)
+          }) & !us_bitmap & !them_bitmap) >> 1 & !H_FILE;
+
+          // indeces.iter().fold(0, |_bb: u64, i: &u64| {
+          //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
+          //   // println!("rank (5) -> {:64b}", rank_mask(5));
+          //   // bb | rook_mask(i)
+          //   _bb | get_ocluded_squares(_bb, bb)
+          // })
+
+          // get_ocluded_squares(bb, bb)
+          // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
+          sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
+
+
           // *bb
 
 
