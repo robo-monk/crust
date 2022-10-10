@@ -21,9 +21,13 @@ fn main() {
     bboard.pprint();
 
     // bboard.make_unchecked_move()
-    bboard.register_move("d2", "d3", Piece::new(P::Pawn, Color::White));
+    bboard.register_unchecked_move("d2", "d3", Piece::new(P::Pawn, Color::White));
+    bboard.register_unchecked_move("e7", "e4", Piece::new(P::Pawn, Color::Black));
 
-    bboard.pprint();
+    // bboard.get_available_captures(Piece::new(P::Pawn, Color::White));
+    bboard.preview_moves(&Piece::new(P::Pawn, Color::White));
+
+    // bboard.pprint();
     // bboard.place(Piece::new(P::Pawn, Color::White), 4);
     return;
 

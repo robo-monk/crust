@@ -221,7 +221,7 @@ impl Piece {
             (Color::Black, P::Rook) => "♜",
             (Color::Black, P::Queen) => "♛",
             (Color::Black, P::King) => "♚",
-            (Color::Black, P::Preview) => ".",
+            (Color::Black, P::Preview) => "x",
         }
     }
 
