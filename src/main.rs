@@ -42,11 +42,11 @@ fn main() {
     // bboard.pprint();
 
     // bboard.clone().preview_moves(&Piece::new(P::Pawn, Color::White));
-    bboard.clone().preview_moves(&Piece::new(P::Queen, Color::White));
+    // bboard.clone().preview_moves(&Piece::new(P::Queen, Color::White));
 
     // bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
 
-    bboard.pprint();
+    // bboard.pprint();
     // bboard.place(Piece::new(P::Pawn, Color::White), 4);
     return;
 

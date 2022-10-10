@@ -92,11 +92,13 @@ fn queen_attacks(_bb: u64, empty: u64) -> u64 {
 pub struct BBoard {
     white: [u64; 7],
     black: [u64; 7],
+    turn: Color,
 }
 
 impl BBoard {
     pub fn new() -> Self {
         BBoard {
+            turn: Color::White,
             white: [0; 7],
             black: [0; 7],
         }
@@ -110,7 +112,7 @@ impl BBoard {
     }
 
     pub fn unplace(&mut self, piece: Piece, index: u8) {
-        print!("unplace> ");
+        // print!("unplace> ");
         self.mutate_bboard_of_piece(&piece, |b: u64| b & !(1 << index));
     }
 
@@ -132,9 +134,9 @@ impl BBoard {
         F: Fn(u64) -> u64,
     {
         let side_bit_board = self.get_mut_bboard_of_piece(piece);
-        println!("before bit mutation {side_bit_board:64b}");
+        // println!("before bit mutation {side_bit_board:64b}");
         *side_bit_board = mutation(*side_bit_board);
-        println!("after bit mutation {side_bit_board:64b}");
+        // println!("after bit mutation {side_bit_board:64b}");
     }
 
     pub fn get_bboard_of_piece(&self, piece: &Piece) -> u64 {
@@ -222,6 +224,9 @@ impl BBoard {
         }
 
         board.print();
+        let available_moves = self.count_available_moves();
+        println!("> {:?} to play", self.turn);
+        println!("> {available_moves} available moves...");
 
         // bb.reverse_bits();
         // for i in 0..8 {
@@ -244,6 +249,38 @@ impl BBoard {
             // RANK_1
         });
         self.pprint();
+    }
+
+    pub fn get_available_targets(&self, color: Color) -> [u64; 6] {
+        let mut targets: [u64; 6] = [0; 6];
+
+        for (i, class) in [P::Pawn, P::Bishop, P::King, P::Queen, P::Rook, P::Knight]
+            .iter()
+            .enumerate()
+        {
+            let piece = Piece {
+                color,
+                class: *class,
+            };
+            let available_moves = self.get_available_captures(&piece);
+            targets[i] = available_moves;
+            // let mut bb = self.get_bboard_of_piece(&piece).clone();
+            // loop {
+            //     let index = bb.trailing_zeros();
+
+            //     if index >= 64 {
+            //         break;
+            //     }
+            //     bb &= !(1 << index);
+            //     // board._set_square(index as usize, Some(piece));
+            // }
+        }
+        targets
+    }
+
+    pub fn count_available_moves(&self) -> u32 {
+      let targets = self.get_available_targets(self.turn);
+      targets.iter().fold(0, |count, t| count + t.count_ones())
     }
 
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
@@ -295,9 +332,11 @@ impl BBoard {
                 // enemy_bitmap
             }
 
-            P::Queen => {
-                queen_attacks(bb, empty) & !us_bitmap
-            }
+            P::Queen => queen_attacks(bb, empty) & !us_bitmap,
+            P::King => 0,
+            P::Rook => rook_attacks(bb, empty) & !us_bitmap,
+            P::Bishop => bishop_attacks(bb, empty) & !us_bitmap,
+            P::Knight => 0,
             _ => todo!(),
         }
     }
