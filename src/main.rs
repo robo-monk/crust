@@ -1,12 +1,27 @@
 mod chess;
+use chess::bboard::BBoard;
+// use bitvec::prelude::*;
+
 
 // use chess::{Board};
+use chess::piece::{Piece, P, Color};
 use chess::board::Board;
 
 fn main() {
     // let board = Board::new();
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     let mut board = Board::from_fen(&fen);
+
+    let mut bboard = BBoard::new();
+
+    // bboard.place(Piece::new(P::Pawn, Color::White), 4);
+    bboard.place(Piece::new(P::Pawn, Color::White), 0);
+    bboard.place(Piece::new(P::Pawn, Color::White), 23);
+    bboard.place(Piece::new(P::Pawn, Color::White), 40);
+    bboard.place(Piece::new(P::Pawn, Color::White), 63);
+    bboard.pprint();
+
+    return;
 
     // board.get_square();
     // board.make_move("e2", "e4");
