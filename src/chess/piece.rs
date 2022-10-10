@@ -105,11 +105,12 @@ impl Direction {
             Direction::UpRight => 0xfefefefefefefe00,
             Direction::Right => 0xfefefefefefefefe,
             Direction::DownRight => 0x00fefefefefefefe,
-            Direction::Down => 0x00ffffffffffffff,
+            // Direction::Down => 0x00ffffffffffffff,
+            Direction::Up => 0x00ffffffffffffff,
             Direction::DownLeft => 0x00ffffffffffffff,
             Direction::Left => 0x7f7f7f7f7f7f7f7f,
             Direction::UpLeft => 0x7f7f7f7f7f7f7f00,
-            Direction::Up => 0xffffffffffffff00,
+            Direction::Down => 0xffffffffffffff00,
             _ => panic!("invalid direction"),
         }
     }

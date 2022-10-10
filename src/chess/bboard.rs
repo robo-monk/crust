@@ -240,7 +240,7 @@ impl BBoard {
               i.rotate_left(v as u32)
             }
           }
-          fn occludedFill (mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
+          fn occluded_fill (mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
             let r: i32 = direction.value() as i32; // {+-1,7,8,9}
             pro &= direction.avoid_wrap();
 
@@ -259,16 +259,23 @@ impl BBoard {
           }
 
           fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
-            let fill = occludedFill(slider, empty, direction);
+            let fill = occluded_fill(slider, empty, direction);
             shift_one(fill, direction)
           }
 
           (indeces.iter().fold(0, |bb: u64, i: &u64| {
-            println!("rank ({i}) -> {:064b}", rank_mask(i));
-            // println!("rank (5) -> {:64b}", rank_mask(5));
-            bb | rook_mask(i)
-          }) & !us_bitmap & !them_bitmap) >> 1 & !H_FILE;
-
+            let _bb = 1 << i;
+            bb | (
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Up) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Down) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Left) |
+              sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Right)
+            )
+          })) & !us_bitmap
           // indeces.iter().fold(0, |_bb: u64, i: &u64| {
           //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
           //   // println!("rank (5) -> {:64b}", rank_mask(5));
@@ -278,17 +285,16 @@ impl BBoard {
 
           // get_ocluded_squares(bb, bb)
           // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
-          (
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
-            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
-          ) 
-          & !us_bitmap
+          // (
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
+          //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
+          // ) & !us_bitmap
 
 
           // *bb
