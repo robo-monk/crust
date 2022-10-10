@@ -35,7 +35,13 @@ fn main() {
     // bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
 
     let W_PAWN = &Piece::new(P::Pawn, Color::White);
-    bboard.preview_moves_of("a2", W_PAWN);
+    let B_QUEEN = &Piece::new(P::Queen, Color::Black);
+    // bboard.preview_moves_of("a2", W_PAWN);
+    bboard.register_unchecked_move("b2", "b4", Piece::new(P::Pawn, Color::White));
+    bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
+    bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
+    bboard.preview_moves_of("b4", W_PAWN);
+    bboard.preview_moves_of("d8", B_QUEEN);
 
 
     // bboard.pprint();
