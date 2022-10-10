@@ -9,7 +9,7 @@ pub const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_
 
 pub const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000;
 pub const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
-
+pub const PIECES: [P; 6] = [P::Pawn, P::Bishop, P::King, P::Queen, P::Rook, P::Knight];
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
@@ -79,9 +79,9 @@ fn knight_attacks(knights: u64) -> u64 {
 }
 
 fn king_attacks(bb: u64) -> u64 {
-  let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
-  let _bb = bb | attacks;
-  attacks | Direction::Up.shift_once(_bb) | Direction::Down.shift_once(_bb)
+    let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
+    let _bb = bb | attacks;
+    attacks | Direction::Up.shift_once(_bb) | Direction::Down.shift_once(_bb)
 }
 
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
@@ -254,44 +254,67 @@ impl BBoard {
         // }
     }
 
-    pub fn preview_moves(&mut self, piece: &Piece) {
-        let moves = self.get_available_captures(piece);
-        // let bb =  self.get_bboard_of_piece(piece);
-        // let preview = self.get_bboard_of_piece(&Piece::new(P::Preview, piece.color));
-        // self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
+    pub fn preview(&mut self, moves: u64) {
         self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| {
             bb | moves
-            // A_FILE
-            // RANK_1
         });
+    }
+
+    pub fn preview_moves_of(&mut self, sq: &str, piece: &Piece) {
+        let i = BBoard::parse_sq(sq);
+        let moves = self.get_available_moves_at_index(i as u32, piece);
+        self.preview(moves);
+        self.pprint();
+    }
+    pub fn preview_moves(&mut self, piece: &Piece) {
+        let moves = self.get_available_moves(piece);
+        self.preview(moves);
         self.pprint();
     }
 
     pub fn get_available_targets(&self, color: Color) -> [u64; 6] {
         let mut targets: [u64; 6] = [0; 6];
 
-        for (i, class) in [P::Pawn, P::Bishop, P::King, P::Queen, P::Rook, P::Knight]
-            .iter()
-            .enumerate()
-        {
+        for (i, class) in PIECES.iter().enumerate() {
             let piece = Piece {
                 color,
                 class: *class,
             };
-            let available_moves = self.get_available_captures(&piece);
+            let available_moves = self.get_available_moves(&piece);
             targets[i] = available_moves;
-            // let mut bb = self.get_bboard_of_piece(&piece).clone();
+        }
+
+        targets
+    }
+
+    pub fn count_ply_moves(&self, depth: u32) -> u32 {
+        let targets = self.get_available_targets(self.turn);
+        let bb = self.get_turns_bb_array();
+        for (i, class) in PIECES.iter().enumerate() {
+          let piece_bb = bb[i];
+          let i_mask = 1 << i;
+            // let bb = targets[i];
             // loop {
             //     let index = bb.trailing_zeros();
 
             //     if index >= 64 {
             //         break;
             //     }
+
+            //     // switch to zero
             //     bb &= !(1 << index);
-            //     // board._set_square(index as usize, Some(piece));
+
+            //     indeces.push(index as u64);
             // }
         }
-        targets
+        todo!()
+    }
+
+    pub fn get_turns_bb_array(&self) -> [u64; 7]{
+        match self.turn {
+            Color::White => self.black,
+            Color::Black => self.white,
+        }
     }
 
     pub fn count_available_moves(&self) -> u32 {
@@ -299,9 +322,20 @@ impl BBoard {
         targets.iter().fold(0, |count, t| count + t.count_ones())
     }
 
-    pub fn get_available_captures(&self, piece: &Piece) -> u64 {
-        let bb = self.get_bboard_of_piece(&piece);
+    pub fn count_available_moves_at_index(&self, i: u32, piece: &Piece) -> u32 {
+      self.get_available_moves_at_index(i, piece).count_ones()
+    }
+    pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
+        let bb = 1 << i;
+        self.get_available_moves_of_piece_type(bb, piece)
+    }
 
+    pub fn get_available_moves(&self, piece: &Piece) -> u64 {
+        let bb = self.get_bboard_of_piece(&piece);
+        self.get_available_moves_of_piece_type(bb, piece)
+    }
+
+    pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
         let us_bitmap = (match piece.color {
             Color::White => self.white,
             Color::Black => self.black,
@@ -330,22 +364,8 @@ impl BBoard {
 
                 let moves = ((bb >> 8 * c) | (bb & first_move_rank) >> 16) & !them_bitmap; // moves forward
 
-                println!("not moved pawns {:64b}", (bb & RANK_1));
-                println!("attacks {attacks:64b}");
-                println!("enemy bitmap {them_bitmap:64b}");
-
                 let fill = occluded_fill(bb, empty, Direction::Down);
                 (fill & moves) | attacks
-                // fill
-                // (A_FILE & !self.white[0]) |
-                // (RANK_3 & !self.white[0]) |
-                // (RANK_2 & !self.white[0]) |
-                // (RANK_1 & !self.white[0])
-                //   & !(us_bitmap | them_bitmap)
-
-                // rank_mask(2)
-                // bb & RANK_2
-                // enemy_bitmap
             }
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
             P::King => king_attacks(bb) & !us_bitmap,
@@ -355,4 +375,6 @@ impl BBoard {
             _ => todo!(),
         }
     }
+
+    
 }

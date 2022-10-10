@@ -21,18 +21,22 @@ fn main() {
     bboard.pprint();
 
     // bboard.make_unchecked_move()
-    bboard.register_unchecked_move("d2", "d3", Piece::new(P::Pawn, Color::White));
-    bboard.register_unchecked_move("e7", "e4", Piece::new(P::Pawn, Color::Black));
-    bboard.register_unchecked_move("g7", "g5", Piece::new(P::Pawn, Color::Black));
-    bboard.register_unchecked_move("h7", "h6", Piece::new(P::Pawn, Color::Black));
+    // bboard.register_unchecked_move("d2", "d3", Piece::new(P::Pawn, Color::White));
+    // bboard.register_unchecked_move("e7", "e4", Piece::new(P::Pawn, Color::Black));
+    // bboard.register_unchecked_move("g7", "g5", Piece::new(P::Pawn, Color::Black));
+    // bboard.register_unchecked_move("h7", "h6", Piece::new(P::Pawn, Color::Black));
 
     // bboard.register_unchecked_move("d8", "b4", Piece::new(P::Queen, Color::Black));
-    bboard.register_unchecked_move("d8", "h3", Piece::new(P::Queen, Color::Black));
+    // bboard.register_unchecked_move("d8", "h3", Piece::new(P::Queen, Color::Black));
 
     // bboard.register_unchecked_move("d1", "d5", Piece::new(P::Queen, Color::White));
-    bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
-    bboard.register_unchecked_move("d1", "d8", Piece::new(P::Queen, Color::White));
-    bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
+    // bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
+    // bboard.register_unchecked_move("d1", "d8", Piece::new(P::Queen, Color::White));
+    // bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
+
+    let W_PAWN = &Piece::new(P::Pawn, Color::White);
+    bboard.preview_moves_of("a2", W_PAWN);
+
 
     // bboard.pprint();
     // bboard.get_available_captures(Piece::new(P::Pawn, Color::White));
