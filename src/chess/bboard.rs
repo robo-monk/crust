@@ -3,6 +3,8 @@ use super::board::{Board};
 
 const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
 const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
+const RANK_1: u64 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
+const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000;
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 #[derive(Debug)]
@@ -145,6 +147,7 @@ impl BBoard {
       self.mutate_bboard_of_piece(&Piece::new(P::Preview, piece.color), |bb: u64| {
         bb | moves
         // A_FILE
+        // RANK_1
       });
       self.pprint();
     }
@@ -152,7 +155,8 @@ impl BBoard {
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
       let bb = self.get_bboard_of_piece(&piece); 
 
-      let enemy_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
+      let us_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
+      let them_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
       //  iter.reduce(|accum, item| {
         // if accum >= item { accum } else { item }
     // })
@@ -162,10 +166,16 @@ impl BBoard {
           // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
           // let attacks = (bb >> 8 & !A_FILE); // moves forward
           let attacks = 
-            ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & enemy_bitmap;// moves forward
+            ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
+
+          let moves = 
+            ((bb >> 8) | (bb & RANK_2) >> 16) & !them_bitmap;// moves forward
+        
+        println!("not moved pawns {:64b}", (bb & RANK_1));
           println!("attacks {attacks:64b}");
-          println!("enemy bitmap {enemy_bitmap:64b}");
-          attacks
+          println!("enemy bitmap {them_bitmap:64b}");
+          attacks | moves
+          // bb & RANK_2
           // enemy_bitmap
         }
         _ => todo!()
