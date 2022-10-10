@@ -1,11 +1,37 @@
 use super::piece::{Color, Direction, Piece, P};
 use super::board::{Board};
 
+
 const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
 const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
 const RANK_1: u64 = 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000;
+const RANK_3: u64 = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000;
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
+
+fn rank_mask(sq: &u64) -> u64 {
+  0xff << (sq & 56)
+}
+
+// U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
+
+// U64 fileMask(int sq) {return C64(0x0101010101010101) << (sq & 7);}
+
+// U64 diagonalMask(int sq) {
+//    const U64 maindia = C64(0x8040201008040201);
+//    int diag =8*(sq & 7) - (sq & 56);
+//    int nort = -diag & ( diag >> 31);
+//    int sout =  diag & (-diag >> 31);
+//    return (maindia >> sout) << nort;
+// }
+
+// U64 antiDiagMask(int sq) {
+//    const U64 maindia = C64(0x0102040810204080);
+//    int diag =56- 8*(sq&7) - (sq&56);
+//    int nort = -diag & ( diag >> 31);
+//    int sout =  diag & (-diag >> 31);
+//    return (maindia >> sout) << nort;
+// }
 
 #[derive(Debug)]
 pub struct BBoard {
@@ -94,6 +120,25 @@ impl BBoard {
         &mut side_bit_boards[piece_bit_board_index as usize]
     }
 
+    pub fn get_piece_indeces(&self, piece: &Piece) -> Vec::<u64>{
+      let mut bb = self.get_bboard_of_piece(&piece).clone();
+      let mut indeces = Vec::new();
+
+      loop {
+          let index = bb.trailing_zeros();
+
+          if index >= 64 {
+              break;
+          }
+
+          // switch to zero
+          bb &= !(1 << index);
+
+          indeces.push(index as u64);
+      }
+
+      indeces
+    }
     pub fn pprint(&mut self) {
       let mut board: Board = Board::new();
 
@@ -102,28 +147,13 @@ impl BBoard {
                 let piece = Piece { color, class };
                 let mut bb = self.get_bboard_of_piece(&piece).clone();
                 loop {
-                    // let index = bb.trailing_zeros();
-                    // let index = bb.leading_zeros();
-                    // println!("{bb:64b}");
-                    // let index = bb.trailing_zeros();
                     let index = bb.trailing_zeros();
 
                     if index >= 64 {
                         break;
                     }
-                    // println!("index > {index}");
-                    // bb &= 1 << index-1; // switch 1 to zero
-                    // bb &= 1 << (64 - (index+1));
-                    // switch to zero
                     bb &= !(1 << index);
-                    // dbg!(index, piece);
-
                     board._set_square(index as usize, Some(piece));
-                    // println!("{bb:64b}");
-                    // let index = bb.trailing_zeros();
-                    // println!("count of zeros upfron > {index}");
-                    // self.mutate_bboard_of_piece(&piece, move |b: u64| b | 1 << (64 - (target + 1)));
-                    // break;
                 }
             }
         }
@@ -155,28 +185,57 @@ impl BBoard {
     pub fn get_available_captures(&self, piece: &Piece) -> u64 {
       let bb = self.get_bboard_of_piece(&piece); 
 
-      let us_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
+      let us_bitmap = self.white.iter().fold(0, |bb, pice_bb| bb | pice_bb);
       let them_bitmap = self.black.iter().fold(0, |bb, pice_bb| bb | pice_bb);
       //  iter.reduce(|accum, item| {
         // if accum >= item { accum } else { item }
     // })
+
       match piece.class {
         P::Pawn => {
           // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
           // let attacks = (bb << 9 & !A_FILE) | (bb << 7 & !A_FILE);
           // let attacks = (bb >> 8 & !A_FILE); // moves forward
           let attacks = 
+            // ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
             ((bb >> 9 & !A_FILE) | (bb >> 7 & !A_FILE)) & them_bitmap;// moves forward
 
           let moves = 
             ((bb >> 8) | (bb & RANK_2) >> 16) & !them_bitmap;// moves forward
         
-        println!("not moved pawns {:64b}", (bb & RANK_1));
+          println!("not moved pawns {:64b}", (bb & RANK_1));
           println!("attacks {attacks:64b}");
           println!("enemy bitmap {them_bitmap:64b}");
-          attacks | moves
-          // bb & RANK_2
+          // attacks | moves
+          // (A_FILE & !self.white[0]) |
+          // (RANK_3 & !self.white[0]) |
+          // (RANK_2 & !self.white[0]) |
+          // (RANK_1 & !self.white[0]) 
+          //   & !(us_bitmap | them_bitmap)
+
+          // rank_mask(2)
+          bb & RANK_2
           // enemy_bitmap
+        },
+
+        P::Queen => {
+          // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
+          //   bb 
+          // }).unwrap()
+          let indeces = self.get_piece_indeces(piece);
+
+          indeces.iter().fold(0, |bb: u64, i: &u64| {
+            println!("rank ({i}) -> {:064b}", rank_mask(i));
+            // println!("rank (5) -> {:64b}", rank_mask(5));
+            bb | (rank_mask(i) & (!(us_bitmap) | them_bitmap))
+          }) 
+          // *bb
+
+
+          // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
+          //   bb 
+          // }).unwrap()
+
         }
         _ => todo!()
       }
