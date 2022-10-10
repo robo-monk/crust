@@ -11,19 +11,15 @@ fn main() {
     // let board = Board::new();
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     let mut board = Board::from_fen(&fen);
-
     let mut bboard = BBoard::new();
 
-    // bboard.place(Piece::new(P::Pawn, Color::White), 4);
-    bboard.place(Piece::new(P::Pawn, Color::White), 0);
-    bboard.place(Piece::new(P::Pawn, Color::White), 23);
-    bboard.place(Piece::new(P::Pawn, Color::White), 40);
+    for (i, piece) in board.pieces.iter() {
+        bboard.place(*piece, *i);
+    }
 
-    bboard.place(Piece::new(P::Queen, Color::White), 22);
-    bboard.place(Piece::new(P::King, Color::White), 50);
-    bboard.place(Piece::new(P::Pawn, Color::White), 63);
+
     bboard.pprint();
-
+    // bboard.place(Piece::new(P::Pawn, Color::White), 4);
     return;
 
     // board.get_square();

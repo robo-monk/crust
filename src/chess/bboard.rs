@@ -1,4 +1,5 @@
 use super::piece::{Color, Direction, Piece, P};
+use super::board::{Board};
 
 #[derive(Debug)]
 pub struct BBoard {
@@ -68,6 +69,8 @@ impl BBoard {
     }
 
     pub fn pprint(&mut self) {
+      let mut board: Board = Board::new();
+
         for color in [Color::White, Color::Black] {
             for class in [P::Pawn, P::Bishop, P::King, P::Queen] {
                 let piece = Piece { color, class };
@@ -87,6 +90,8 @@ impl BBoard {
                     // bb &= 1 << (64 - (index+1));
                     bb &= !(1 << index);
                     dbg!(index, piece);
+
+                    board._set_square(index as usize, Some(piece));
                     // println!("{bb:64b}");
                     // let index = bb.trailing_zeros();
                     // println!("count of zeros upfron > {index}");
@@ -95,6 +100,8 @@ impl BBoard {
                 }
             }
         }
+
+        board.print();
 
         // bb.reverse_bits();
         // for i in 0..8 {
