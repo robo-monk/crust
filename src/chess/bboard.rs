@@ -50,6 +50,24 @@ fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
     shift_one(fill, direction)
 }
 
+fn bishop_attacks(_bb: u64, empty: u64) -> u64 {
+    sliding_attacks(_bb, empty, Direction::UpLeft)
+        | sliding_attacks(_bb, empty, Direction::UpRight)
+        | sliding_attacks(_bb, empty, Direction::DownRight)
+        | sliding_attacks(_bb, empty, Direction::DownLeft)
+}
+
+fn rook_attacks(_bb: u64, empty: u64) -> u64 {
+    sliding_attacks(_bb, empty, Direction::Up)
+        | sliding_attacks(_bb, empty, Direction::Right)
+        | sliding_attacks(_bb, empty, Direction::Down)
+        | sliding_attacks(_bb, empty, Direction::Left)
+}
+
+fn queen_attacks(_bb: u64, empty: u64) -> u64 {
+    bishop_attacks(_bb, empty) | rook_attacks(_bb, empty)
+}
+
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
 
 // U64 fileMask(int sq) {return C64(0x0101010101010101) << (sq & 7);}
@@ -278,50 +296,7 @@ impl BBoard {
             }
 
             P::Queen => {
-                // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
-                //   bb
-                // }).unwrap()
-                let indeces = self.get_piece_indeces(piece);
-
-                (indeces.iter().fold(0, |bb: u64, i: &u64| {
-                    let _bb = 1 << i;
-                    bb | (sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpLeft)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::UpRight)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownRight)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::DownLeft)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Up)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Down)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Left)
-                        | sliding_attacks(_bb, !(us_bitmap | them_bitmap), Direction::Right))
-                })) & !us_bitmap
-
-                // us_bitmap
-                // them_bitmap
-                // indeces.iter().fold(0, |_bb: u64, i: &u64| {
-                //   // println!("rank ({i}) -> {:064b}", rank_mask(i));
-                //   // println!("rank (5) -> {:64b}", rank_mask(5));
-                //   // bb | rook_mask(i)
-                //   _bb | get_ocluded_squares(_bb, bb)
-                // })
-
-                // get_ocluded_squares(bb, bb)
-                // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
-                // (
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
-                //   sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
-                // ) & !us_bitmap
-
-                // *bb
-
-                // *self.get_piece_indeces(piece).iter().reduce(|accum: | -> u64 {
-                //   bb
-                // }).unwrap()
+                queen_attacks(bb, empty) & !us_bitmap
             }
             _ => todo!(),
         }

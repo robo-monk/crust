@@ -26,11 +26,13 @@ fn main() {
     bboard.register_unchecked_move("g7", "g5", Piece::new(P::Pawn, Color::Black));
     bboard.register_unchecked_move("h7", "h6", Piece::new(P::Pawn, Color::Black));
 
-    bboard.register_unchecked_move("d8", "b4", Piece::new(P::Queen, Color::Black));
+    // bboard.register_unchecked_move("d8", "b4", Piece::new(P::Queen, Color::Black));
     bboard.register_unchecked_move("d8", "h3", Piece::new(P::Queen, Color::Black));
 
     // bboard.register_unchecked_move("d1", "d5", Piece::new(P::Queen, Color::White));
     bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
+    bboard.register_unchecked_move("d1", "d8", Piece::new(P::Queen, Color::White));
+    bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
 
     // bboard.get_available_captures(Piece::new(P::Pawn, Color::White));
     // bboard.preview_moves(&Piece::new(P::Pawn, Color::White));
@@ -39,11 +41,12 @@ fn main() {
     // bboard.clone().preview_moves(&Piece::new(P::Queen, Color::Black));
     // bboard.pprint();
 
-    bboard.clone().preview_moves(&Piece::new(P::Pawn, Color::White));
+    // bboard.clone().preview_moves(&Piece::new(P::Pawn, Color::White));
+    bboard.clone().preview_moves(&Piece::new(P::Queen, Color::White));
 
     // bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
 
-    // bboard.pprint();
+    bboard.pprint();
     // bboard.place(Piece::new(P::Pawn, Color::White), 4);
     return;
 
