@@ -88,8 +88,8 @@ impl Add<Direction> for usize {
 impl Direction {
     pub fn value(&self) -> i64 {
         match self {
-            Direction::Down => -8,
-            Direction::Up => 8,
+            Direction::Down => 8,
+            Direction::Up => -8,
             Direction::Left => -1,
             Direction::Right => 1,
             Direction::UpLeft => Direction::Up + Direction::Left, // 7

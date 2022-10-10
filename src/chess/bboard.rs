@@ -233,24 +233,12 @@ impl BBoard {
             rank_mask(sq) | file_mask(sq)
           }
 
-          fn get_ocluded_squares(mut p: u64, bb: u64) -> u64 {
-            let mut g = bb;
-            g |= p & (g <<  8);
-            p &=     (p <<  8);
-            g |= p & (g << 16);
-            p &=     (p << 16);
-            g |= p & (g << 32);
-            return g;
-          }
-
-
           fn rotate(i: u64, v: i32) -> u64{
             if v.is_negative() {
               i.rotate_right(v.abs() as u32)
             } else {
               i.rotate_left(v as u32)
             }
-
           }
           fn occludedFill (mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
             let r: i32 = direction.value() as i32; // {+-1,7,8,9}
@@ -290,7 +278,17 @@ impl BBoard {
 
           // get_ocluded_squares(bb, bb)
           // sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up);
-          sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
+          (
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpLeft) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::UpRight) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownRight) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::DownLeft) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Up) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Down) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Left) |
+            sliding_attacks(bb, !(us_bitmap | them_bitmap), Direction::Right)
+          ) 
+          & !us_bitmap
 
 
           // *bb
