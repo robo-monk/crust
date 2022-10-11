@@ -11,7 +11,15 @@ pub const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_
 pub const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 pub const PIECES: [P; 6] = [P::Pawn, P::Knight, P::Bishop, P::Rook, P::Queen, P::King];
-pub const PIECES_PERV: [P; 7] = [P::Pawn, P::Knight, P::Bishop, P::Rook, P::Queen, P::King, P::Preview];
+pub const PIECES_PERV: [P; 7] = [
+    P::Pawn,
+    P::Knight,
+    P::Bishop,
+    P::Rook,
+    P::Queen,
+    P::King,
+    P::Preview,
+];
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
@@ -163,7 +171,12 @@ impl BBoard {
             Color::Black => &self.black,
         };
 
-        let piece_bit_board_index = match piece.class {
+        let piece_bit_board_index = BBoard::get_piece_bb_index(piece.class);
+        side_bit_boards[piece_bit_board_index as usize]
+    }
+
+    pub fn get_piece_bb_index(class: P) -> usize {
+        match class {
             P::Pawn => 0,
             P::Knight => 1,
             P::Bishop => 2,
@@ -171,9 +184,7 @@ impl BBoard {
             P::Queen => 4,
             P::King => 5,
             P::Preview => 6,
-        } as usize;
-
-        side_bit_boards[piece_bit_board_index as usize]
+        }
     }
 
     pub fn get_mut_bboard_of_piece(&mut self, piece: &Piece) -> &mut u64 {
@@ -182,16 +193,7 @@ impl BBoard {
             Color::Black => &mut self.black,
         };
 
-        let piece_bit_board_index = match piece.class {
-            P::Pawn => 0,
-            P::Knight => 1,
-            P::Bishop => 2,
-            P::Rook => 3,
-            P::Queen => 4,
-            P::King => 5,
-            P::Preview => 6,
-        } as usize;
-
+        let piece_bit_board_index = BBoard::get_piece_bb_index(piece.class);
         &mut side_bit_boards[piece_bit_board_index as usize]
     }
 
