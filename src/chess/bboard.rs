@@ -309,6 +309,8 @@ impl BBoard {
         // maybe this is slow, convert to for in
         // get_available_moves_at_index
         // for (i, class) in PIECES.iter().enumerate() {
+
+        let mut move_count = 0;
         for piece_i in 0..6 {
             let piece = Piece::new(PIECES[piece_i], self.turn);
             let piece_bb = bb[piece_i];
@@ -320,15 +322,15 @@ impl BBoard {
             loop_through_indeces(piece_bb, |from| {
                 // println!("|> - {:?} > {i}", piece);
                 let moves = self.get_available_moves_at_index(from, &piece);
-                let captures = moves & them;
+                // move_count += moves.count_ones();
 
+                let captures = moves & them;
                 loop_through_indeces(moves & !captures, |target| {
                     // println!("---> - from: ({i}) > to ({ii})");
                     // self.make_unchecked_move()
                     // let mut subboard = self;
                     self.make_unchecked_move(from as u8, target as u8, piece);
-                    self.count_ply_moves(depth - 1);
-
+                    move_count+= self.count_ply_moves(depth - 1);
                     self.make_unchecked_move(target as u8, from as u8, piece);
                     // self.make_unchecked_move(i as u8, ii as u8, piece);
                     // self.clone().mutate_bboard_of_piece()
@@ -340,7 +342,7 @@ impl BBoard {
                     // let mut subboard = self;
                     for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
                         if (piece_bb & (1 << target)) > 0 {
-                            println!("captures a {:?}", PIECES[i as usize]);
+                            // println!("captures a {:?}", PIECES[i as usize]);
                             let captured_piece_type = PIECES[i as usize];
                             let captured_piece = Piece {
                                 class: captured_piece_type,
@@ -354,8 +356,7 @@ impl BBoard {
                             );
 
                             self.make_unchecked_move(from as u8, target as u8, piece);
-
-                            self.count_ply_moves(depth - 1);
+                            move_count += self.count_ply_moves(depth - 1);
                             self.make_unchecked_move(target as u8, from as u8, piece);
                             self.place(
                                 captured_piece,
@@ -373,8 +374,9 @@ impl BBoard {
             // println!("| END {:?} > {i} \n", piece);
         }
 
-        let available_moves = self.count_available_moves();
-        0
+        move_count
+        // let available_moves = self.count_available_moves();
+        // 0
     }
 
     pub fn not_turn(&self) -> Color {

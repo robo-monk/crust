@@ -47,7 +47,7 @@ fn main() {
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 
-    let ply = 5;
+    let ply = 6;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
