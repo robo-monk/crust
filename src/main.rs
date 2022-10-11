@@ -48,17 +48,17 @@ fn main() {
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 
-    let ply = 2;
+    let ply = 3;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
     bboard.pprint();
 
-    loop {
-        thread::sleep(time::Duration::from_millis(800));
-        bboard.make_random_move();
-        bboard.pprint();
-    }
+    // loop {
+    //     thread::sleep(time::Duration::from_millis(50));
+    //     bboard.make_random_move();
+    //     bboard.pprint();
+    // }
 
 
     // bboard.pprint();

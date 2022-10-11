@@ -534,19 +534,30 @@ impl BBoard {
 
         match piece.class {
             P::Pawn => {
-                let c = if piece.color == Color::Black { -1 } else { 1 };
-                let attacks = ((bb >> 9 * c & !A_FILE) | (bb >> 7 * c & !H_FILE)) & them_bitmap; // moves forward
+                // let c = if piece.color == Color::Black { -1 } else { 1 };
+                if piece.color == Color::Black  {
+                  let attacks = ((bb << 9 & !A_FILE) | (bb << 7 & !H_FILE)) & them_bitmap; // moves forward
+                  let attacks = (Direction::UpRight.shift_once(bb) | Direction::UpLeft.shift_once(bb)) & them_bitmap; // moves forward
+                  let first_move_rank = RANK_7;
 
-                let first_move_rank = if piece.color == Color::Black {
-                    RANK_7
+                  let moves = Direction::Up.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+
+                  let fill = occluded_fill(bb, empty, Direction::Up);
+                  (fill & moves) | attacks
                 } else {
-                    RANK_2
-                };
+                  let c = 1;
+                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                  let attacks = (Direction::DownRight.shift_once(bb) | Direction::DownLeft.shift_once(bb)) & them_bitmap; // moves forward
 
-                let moves = ((bb >> 8 * c) | (bb & first_move_rank) >> 16) & !them_bitmap; // moves forward
+                  let first_move_rank = RANK_2;
 
-                let fill = occluded_fill(bb, empty, Direction::Down);
-                (fill & moves) | attacks
+                  let moves = (Direction::Down.shift_once(bb) | (bb & first_move_rank) >> 16) & !them_bitmap; // moves forward
+
+                  let fill = occluded_fill(bb, empty, Direction::Down);
+                  (fill & moves) | attacks
+                }
             }
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
             P::King => king_attacks(bb) & !us_bitmap,
