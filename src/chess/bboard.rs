@@ -21,9 +21,10 @@ pub const PIECES_PERV: [P; 7] = [
     P::Preview,
 ];
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
-pub fn loop_through_indeces<F>(mut bb: u64, reducer: F)
+pub fn loop_through_indeces<F>(mut bb: u64, mut reducer: F)
 where
-    F: Fn(u32) -> (),
+    // F: Fn(u32) -> (),
+    F: FnMut(u32) -> (),
 {
     loop {
         let index = bb.trailing_zeros();
@@ -296,76 +297,112 @@ impl BBoard {
         targets
     }
 
-    pub fn count_ply_moves(&self, depth: u32) -> u32 {
+    pub fn count_ply_moves(&mut self, depth: u32) -> u32 {
+        if depth <= 0 {
+            return 1;
+        }
+
         let targets = self.get_available_targets(self.turn);
 
         let bb = self.get_turns_bb_array();
+        let them = self.get_them_bb();
         // maybe this is slow, convert to for in
         // get_available_moves_at_index
-        for (i, class) in PIECES.iter().enumerate() {
-            let piece = Piece::new(*class, self.turn);
-            let piece_bb = bb[i];
-            println!("| START [{:?}] > {i}", piece);
-            println!("| {:64b}", piece_bb);
+        // for (i, class) in PIECES.iter().enumerate() {
+        for piece_i in 0..6 {
+            let piece = Piece::new(PIECES[piece_i], self.turn);
+            let piece_bb = bb[piece_i];
+            // println!("| START [{:?}] > {i}", piece);
+            // println!("| {:64b}", piece_bb);
             //  self.get_available_moves_at_index()
             // let i_mask = 1 << i;
             // fn loop_through_indeces(bb: u64, reducer: f)
-            loop_through_indeces(piece_bb, |i| {
-                println!("|> - {:?} > {i}", piece);
+            loop_through_indeces(piece_bb, |from| {
+                // println!("|> - {:?} > {i}", piece);
+                let moves = self.get_available_moves_at_index(from, &piece);
+                let captures = moves & them;
+
+                loop_through_indeces(moves & !captures, |target| {
+                    // println!("---> - from: ({i}) > to ({ii})");
+                    // self.make_unchecked_move()
+                    // let mut subboard = self;
+                    self.make_unchecked_move(from as u8, target as u8, piece);
+                    self.count_ply_moves(depth - 1);
+
+                    self.make_unchecked_move(target as u8, from as u8, piece);
+                    // self.make_unchecked_move(i as u8, ii as u8, piece);
+                    // self.clone().mutate_bboard_of_piece()
+                });
+
+                loop_through_indeces(captures, |target| {
+                    // println!("---> - from: ({i}) > to ({ii})");
+                    // self.make_unchecked_move()
+                    // let mut subboard = self;
+                    for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
+                        if (piece_bb & (1 << target)) > 0 {
+                            println!("captures a {:?}", PIECES[i as usize]);
+                            let captured_piece_type = PIECES[i as usize];
+                            let captured_piece = Piece {
+                                class: captured_piece_type,
+                                color: self.not_turn(),
+                            };
+                            // bb[i]
+
+                            self.unplace(
+                                captured_piece,
+                                target as u8,
+                            );
+
+                            self.make_unchecked_move(from as u8, target as u8, piece);
+
+                            self.count_ply_moves(depth - 1);
+                            self.make_unchecked_move(target as u8, from as u8, piece);
+                            self.place(
+                                captured_piece,
+                                target as u8,
+                            );
+                            break;
+                        }
+                    }
+                    // println!("capture");
+                    // self.make_unchecked_move(i as u8, ii as u8, piece);
+                    // self.clone().mutate_bboard_of_piece()
+                });
             });
 
-            println!("| END {:?} > {i} \n", piece);
-            // loop {
-            //     let index = piece_bb.trailing_zeros();
-
-            //     let moves = self.get_available_moves_at_index(index, &piece);
-
-            //     if index >= 64 {
-            //         break;
-            //     }
-
-            //     piece_bb &= !(1 << index);
-            // }
-            // let bb = targets[i];
-            // loop {
-            //     let index = bb.trailing_zeros();
-
-            //     if index >= 64 {
-            //         break;
-            //     }
-
-            //     // switch to zero
-            //     bb &= !(1 << index);
-
-            //     indeces.push(index as u64);
-            // }
+            // println!("| END {:?} > {i} \n", piece);
         }
 
-        // for color in [Color::Black, Color::White] {
-        //     for class in PIECES {
-        //         let piece = Piece { color, class };
-        //         let mut bb = self.get_bboard_of_piece(&piece).clone();
-        //         loop {
-        //             let index = bb.trailing_zeros();
-
-        //             if index >= 64 {
-        //                 break;
-        //             }
-        //             bb &= !(1 << index);
-        //             board._set_square(index as usize, Some(piece));
-        //         }
-        //     }
-        // }
-
-        // board.print();
         let available_moves = self.count_available_moves();
-        todo!()
+        0
+    }
+
+    pub fn not_turn(&self) -> Color {
+        match self.turn {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
+    pub fn get_them_bb(&self) -> u64 {
+        (match self.turn {
+            Color::White => self.black,
+            Color::Black => self.white,
+        })
+        .iter()
+        .fold(0, |bb, pice_bb| bb | pice_bb)
+    }
+
+    pub fn get_them_bb_array(&self) -> [u64; 7] {
+        match self.turn {
+            Color::White => self.black,
+            Color::Black => self.white,
+        }
     }
 
     pub fn get_turns_bb_array(&self) -> [u64; 7] {
         match self.turn {
-            Color::White => self.black,
-            Color::Black => self.white,
+            Color::Black => self.black,
+            Color::White => self.white,
         }
     }
 
