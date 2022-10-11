@@ -1,4 +1,5 @@
 mod chess;
+use std::{thread, time};
 use chess::bboard::BBoard;
 // use bitvec::prelude::*;
 
@@ -53,8 +54,11 @@ fn main() {
     println!("ply({ply}) -> {m}");
     bboard.pprint();
 
-    bboard.make_random_move();
-    bboard.pprint();
+    loop {
+        thread::sleep(time::Duration::from_millis(800));
+        bboard.make_random_move();
+        bboard.pprint();
+    }
 
 
     // bboard.pprint();

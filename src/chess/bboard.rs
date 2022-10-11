@@ -2,11 +2,12 @@ use super::board::Board;
 use super::piece::{Color, Direction, Piece, P};
 use rand::Rng; // 0.8.5
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Move {
     from: u32,
     target: u32,
     piece: Piece,
+    captures: Option<Piece>,
 }
 
 pub const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
@@ -153,6 +154,9 @@ impl BBoard {
             black: [0; 7],
         }
     }
+    pub fn shift_turn(&mut self) -> () {
+        self.turn = self.not_turn();
+    }
 
     pub fn parse_sq(n: &str) -> u8 {
         Board::parse_notation(&n.to_string()).unwrap() as u8
@@ -169,6 +173,7 @@ impl BBoard {
     pub fn make_unchecked_move(&mut self, from: u8, to: u8, piece: Piece) {
         self.unplace(piece, from);
         self.place(piece, to);
+        self.shift_turn();
     }
 
     pub fn register_unchecked_move(&mut self, from: &str, to: &str, piece: Piece) {
@@ -336,24 +341,44 @@ impl BBoard {
                         from,
                         target,
                         piece,
+                        captures: None,
                     });
                 });
 
                 loop_through_indeces(captures, |target| {
-                    _captures.push(Move {
-                        from,
-                        target,
-                        piece,
-                    });
+                    for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
+                        if (piece_bb & (1 << target)) > 0 {
+                            // println!("captures a {:?}", PIECES[i as usize]);
+                            let captured_piece_type = PIECES[i as usize];
+                            let captures = Piece {
+                                class: captured_piece_type,
+                                color: self.not_turn(),
+                            };
+
+                            _captures.push(Move {
+                                from,
+                                target,
+                                piece,
+                                captures: Some(captures),
+                            });
+                            break;
+                        }
+                    }
                 });
             });
         }
 
         let possible_actions = vec![_moves, _captures].concat();
+        // let possible_actions = vec![_captures].concat();
 
         // / Generate random number in the range [0, 99]
         let action_i = rand::thread_rng().gen_range(0..possible_actions.len());
         let rmove = possible_actions.get(action_i).unwrap();
+        println!(
+            "AGENT > from {} possible actions => chose #{action_i} > {:?}",
+            possible_actions.len(),
+            &rmove
+        );
         self.push_unchecked_move(*rmove);
         // self.make_unchecked_move(target as u8, from as u8, piece);
         // println!("{}", num);
@@ -362,6 +387,9 @@ impl BBoard {
 
     fn push_unchecked_move(&mut self, m: Move) {
         self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
+        if m.captures.is_some() {
+          self.unplace(m.captures.unwrap(), m.target as u8);
+        }
     }
     // pub push_unch
 
