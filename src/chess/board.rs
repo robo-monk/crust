@@ -6,6 +6,7 @@ use super::piece::{Color, Direction, Piece, P};
 pub struct Move {
     pub from: usize,
     pub target: usize,
+		// pub capture: Option<usize>
 }
 
 #[derive(Debug, Clone)]

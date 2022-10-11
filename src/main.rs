@@ -47,10 +47,13 @@ fn main() {
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 
-    let ply = 6;
+    let ply = 2;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
+    bboard.pprint();
+
+    bboard.make_random_move();
     bboard.pprint();
 
 

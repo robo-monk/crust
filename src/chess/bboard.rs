@@ -1,5 +1,13 @@
 use super::board::Board;
 use super::piece::{Color, Direction, Piece, P};
+use rand::Rng; // 0.8.5
+
+#[derive(Clone, Copy)]
+struct Move {
+    from: u32,
+    target: u32,
+    piece: Piece,
+}
 
 pub const H_FILE: u64 = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000;
 pub const A_FILE: u64 = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001;
@@ -297,6 +305,67 @@ impl BBoard {
         targets
     }
 
+    pub fn make_random_move(&mut self) -> () {
+        let targets = self.get_available_targets(self.turn);
+
+        let bb = self.get_turns_bb_array();
+        let them = self.get_them_bb();
+        // maybe this is slow, convert to for in
+        // get_available_moves_at_index
+        // for (i, class) in PIECES.iter().enumerate() {
+
+        let mut move_count = 0;
+        let mut _moves: Vec<Move> = vec![];
+        let mut _captures: Vec<Move> = vec![];
+
+        for piece_i in 0..6 {
+            let piece = Piece::new(PIECES[piece_i], self.turn);
+            let piece_bb = bb[piece_i];
+            // println!("| START [{:?}] > {i}", piece);
+            // println!("| {:64b}", piece_bb);
+            //  self.get_available_moves_at_index()
+            // let i_mask = 1 << i;
+            // fn loop_through_indeces(bb: u64, reducer: f)
+            loop_through_indeces(piece_bb, |from| {
+                // println!("|> - {:?} > {i}", piece);
+                let moves = self.get_available_moves_at_index(from, &piece);
+                let captures = moves & them;
+
+                loop_through_indeces(moves & !captures, |target| {
+                    _moves.push(Move {
+                        from,
+                        target,
+                        piece,
+                    });
+                });
+
+                loop_through_indeces(captures, |target| {
+                    _captures.push(Move {
+                        from,
+                        target,
+                        piece,
+                    });
+                });
+            });
+        }
+
+        let possible_actions = vec![_moves, _captures].concat();
+
+        // / Generate random number in the range [0, 99]
+        let action_i = rand::thread_rng().gen_range(0..possible_actions.len());
+        let rmove = possible_actions.get(action_i).unwrap();
+        self.push_unchecked_move(*rmove);
+        // self.make_unchecked_move(target as u8, from as u8, piece);
+        // println!("{}", num);
+        // println!("can take {} actions", possible_actions.len());
+    }
+
+    fn push_unchecked_move(&mut self, m: Move) {
+        self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
+    }
+    // pub push_unch
+
+    // self.make_unchecked_move(target as u8, from as u8, piece);
     pub fn count_ply_moves(&mut self, depth: u32) -> u32 {
         if depth <= 0 {
             return 1;
@@ -330,7 +399,7 @@ impl BBoard {
                     // self.make_unchecked_move()
                     // let mut subboard = self;
                     self.make_unchecked_move(from as u8, target as u8, piece);
-                    move_count+= self.count_ply_moves(depth - 1);
+                    move_count += self.count_ply_moves(depth - 1);
                     self.make_unchecked_move(target as u8, from as u8, piece);
                     // self.make_unchecked_move(i as u8, ii as u8, piece);
                     // self.clone().mutate_bboard_of_piece()
@@ -350,18 +419,11 @@ impl BBoard {
                             };
                             // bb[i]
 
-                            self.unplace(
-                                captured_piece,
-                                target as u8,
-                            );
-
+                            self.unplace(captured_piece, target as u8);
                             self.make_unchecked_move(from as u8, target as u8, piece);
                             move_count += self.count_ply_moves(depth - 1);
                             self.make_unchecked_move(target as u8, from as u8, piece);
-                            self.place(
-                                captured_piece,
-                                target as u8,
-                            );
+                            self.place(captured_piece, target as u8);
                             break;
                         }
                     }
