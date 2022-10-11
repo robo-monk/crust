@@ -9,7 +9,9 @@ pub const RANK_2: u64 = 0b00000000_11111111_00000000_00000000_00000000_00000000_
 
 pub const RANK_7: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000;
 pub const RANK_8: u64 = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
-pub const PIECES: [P; 6] = [P::Pawn, P::Bishop, P::King, P::Queen, P::Rook, P::Knight];
+
+pub const PIECES: [P; 6] = [P::Pawn, P::Knight, P::Bishop, P::Rook, P::Queen, P::King];
+pub const PIECES_PERV: [P; 7] = [P::Pawn, P::Knight, P::Bishop, P::Rook, P::Queen, P::King, P::Preview];
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
 
 fn rank_mask(sq: &u64) -> u64 {
@@ -216,15 +218,7 @@ impl BBoard {
         let mut board: Board = Board::new();
 
         for color in [Color::Black, Color::White] {
-            for class in [
-                P::Pawn,
-                P::Bishop,
-                P::King,
-                P::Queen,
-                P::Rook,
-                P::Knight,
-                P::Preview,
-            ] {
+            for class in PIECES_PERV {
                 let piece = Piece { color, class };
                 let mut bb = self.get_bboard_of_piece(&piece).clone();
                 loop {
@@ -255,9 +249,7 @@ impl BBoard {
     }
 
     pub fn preview(&mut self, moves: u64) {
-        self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| {
-            bb | moves
-        });
+        self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| bb | moves);
     }
 
     pub fn preview_moves_of(&mut self, sq: &str, piece: &Piece) {
@@ -289,10 +281,48 @@ impl BBoard {
 
     pub fn count_ply_moves(&self, depth: u32) -> u32 {
         let targets = self.get_available_targets(self.turn);
+
         let bb = self.get_turns_bb_array();
+        // maybe this is slow, convert to for in
+        // get_available_moves_at_index
         for (i, class) in PIECES.iter().enumerate() {
-          let piece_bb = bb[i];
-          let i_mask = 1 << i;
+            let piece = Piece::new(*class, self.turn);
+            let piece_bb = bb[i];
+            println!("------- {:?} > {i}", piece);
+            println!("{:64b}", piece_bb);
+            //  self.get_available_moves_at_index()
+            // let i_mask = 1 << i;
+            // fn loop_through_indeces(bb: u64, reducer: f)
+            pub fn loop_through_indeces<F>(mut bb: u64, reducer: F)
+            where
+                F: Fn(u32) -> (),
+            {
+                loop {
+                    let index = bb.trailing_zeros();
+
+                    if index >= 64 {
+                        break;
+                    }
+
+                    reducer(index);
+                    bb &= !(1 << index);
+                }
+            }
+
+            loop_through_indeces(piece_bb, |i| {
+                println!("--------------------------{:?} > {i}", piece);
+            });
+            // loop {
+            //     let index = piece_bb.trailing_zeros();
+
+            //     let moves = self.get_available_moves_at_index(index, &piece);
+
+            //     if index >= 64 {
+            //         break;
+            //     }
+
+            //     piece_bb &= !(1 << index);
+            // }
             // let bb = targets[i];
             // loop {
             //     let index = bb.trailing_zeros();
@@ -307,10 +337,29 @@ impl BBoard {
             //     indeces.push(index as u64);
             // }
         }
+
+        // for color in [Color::Black, Color::White] {
+        //     for class in PIECES {
+        //         let piece = Piece { color, class };
+        //         let mut bb = self.get_bboard_of_piece(&piece).clone();
+        //         loop {
+        //             let index = bb.trailing_zeros();
+
+        //             if index >= 64 {
+        //                 break;
+        //             }
+        //             bb &= !(1 << index);
+        //             board._set_square(index as usize, Some(piece));
+        //         }
+        //     }
+        // }
+
+        // board.print();
+        let available_moves = self.count_available_moves();
         todo!()
     }
 
-    pub fn get_turns_bb_array(&self) -> [u64; 7]{
+    pub fn get_turns_bb_array(&self) -> [u64; 7] {
         match self.turn {
             Color::White => self.black,
             Color::Black => self.white,
@@ -323,7 +372,7 @@ impl BBoard {
     }
 
     pub fn count_available_moves_at_index(&self, i: u32, piece: &Piece) -> u32 {
-      self.get_available_moves_at_index(i, piece).count_ones()
+        self.get_available_moves_at_index(i, piece).count_ones()
     }
     pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
         let bb = 1 << i;
@@ -375,6 +424,4 @@ impl BBoard {
             _ => todo!(),
         }
     }
-
-    
 }

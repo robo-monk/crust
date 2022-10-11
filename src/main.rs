@@ -10,13 +10,16 @@ use chess::board::Board;
 fn main() {
     // let board = Board::new();
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    let mut board = Board::from_fen(&fen);
+    let board = Board::from_fen(&fen);
     let mut bboard = BBoard::new();
 
-    for (i, piece) in board.pieces.iter() {
-        bboard.place(*piece, *i);
-    }
+    for (i, sq) in board.squares.iter().enumerate() {
+        if sq.is_none() { continue }
+        let piece = sq.unwrap();
+        dbg!(i, piece);
 
+        bboard.place(piece, i as u8);
+    }
 
     bboard.pprint();
 
@@ -37,11 +40,17 @@ fn main() {
     let W_PAWN = &Piece::new(P::Pawn, Color::White);
     let B_QUEEN = &Piece::new(P::Queen, Color::Black);
     // bboard.preview_moves_of("a2", W_PAWN);
-    bboard.register_unchecked_move("b2", "b4", Piece::new(P::Pawn, Color::White));
-    bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
-    bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
-    bboard.preview_moves_of("b4", W_PAWN);
-    bboard.preview_moves_of("d8", B_QUEEN);
+    // bboard.register_unchecked_move("b2", "b4", Piece::new(P::Pawn, Color::White));
+    // bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
+    // bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
+    // bboard.preview_moves_of("b4", W_PAWN);
+    // bboard.preview_moves_of("d8", B_QUEEN);
+    // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
+
+    let ply = 3;
+
+    let m = bboard.count_ply_moves(ply);
+    println!("ply({ply}) -> {m}");
 
 
     // bboard.pprint();

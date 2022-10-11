@@ -12,7 +12,7 @@ pub struct Move {
 pub struct Board {
     pub turn: Color,
     pub move_count: u64,
-    squares: [Option<Piece>; 64],
+    pub squares: [Option<Piece>; 64],
     pub pieces: HashMap<u8, Piece>,
     pub en_passant: Option<usize>,
     white_cr: CastlingRights,
