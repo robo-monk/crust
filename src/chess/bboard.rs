@@ -21,6 +21,21 @@ pub const PIECES_PERV: [P; 7] = [
     P::Preview,
 ];
 // const H_FILE: u64 = 0b0000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111;
+pub fn loop_through_indeces<F>(mut bb: u64, reducer: F)
+where
+    F: Fn(u32) -> (),
+{
+    loop {
+        let index = bb.trailing_zeros();
+
+        if index >= 64 {
+            break;
+        }
+
+        reducer(index);
+        bb &= !(1 << index);
+    }
+}
 
 fn rank_mask(sq: &u64) -> u64 {
     0xff << (sq & 56)
@@ -290,30 +305,16 @@ impl BBoard {
         for (i, class) in PIECES.iter().enumerate() {
             let piece = Piece::new(*class, self.turn);
             let piece_bb = bb[i];
-            println!("------- {:?} > {i}", piece);
-            println!("{:64b}", piece_bb);
+            println!("| START [{:?}] > {i}", piece);
+            println!("| {:64b}", piece_bb);
             //  self.get_available_moves_at_index()
             // let i_mask = 1 << i;
             // fn loop_through_indeces(bb: u64, reducer: f)
-            pub fn loop_through_indeces<F>(mut bb: u64, reducer: F)
-            where
-                F: Fn(u32) -> (),
-            {
-                loop {
-                    let index = bb.trailing_zeros();
-
-                    if index >= 64 {
-                        break;
-                    }
-
-                    reducer(index);
-                    bb &= !(1 << index);
-                }
-            }
-
             loop_through_indeces(piece_bb, |i| {
-                println!("--------------------------{:?} > {i}", piece);
+                println!("|> - {:?} > {i}", piece);
             });
+
+            println!("| END {:?} > {i} \n", piece);
             // loop {
             //     let index = piece_bb.trailing_zeros();
 
