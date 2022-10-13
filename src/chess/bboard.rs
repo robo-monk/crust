@@ -113,10 +113,27 @@ fn knight_attacks(knights: u64) -> u64 {
     (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
 }
 
-fn king_attacks(bb: u64) -> u64 {
+fn king_attacks(bb: u64, empty: u64, cr: &CastlingRights) -> u64 {
+    let mut cr_targets: u64 = 0;
+
+    if cr.king {
+        cr_targets |=
+            (Direction::Right.shift_once((Direction::Right.shift_once(bb)) & empty))
+            & (Direction::Right.shift_twice(bb) & empty);
+        println!(">>>>>> CR KING {:64b}", cr_targets);
+    }
+
+    if cr.queen {
+        cr_targets |=
+            Direction::Left.shift_once(bb) & empty & Direction::Left.shift_twice((bb) & empty);
+        println!(">>>>>> CR QUEEN {:64b}", cr_targets);
+    }
+
+    println!(">>>>>> {:64b}", cr_targets);
+
     let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
     let _bb = bb | attacks;
-    attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
+    cr_targets | attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
 }
 
 fn king_queen_castle(bb: u64) -> u64 {
@@ -208,15 +225,33 @@ impl BBoard {
         self.shift_turn();
     }
 
+    pub fn _capture(&mut self, from: &str, to: &str, class: P, capture: P) {
+        self.push_unchecked_move(Move {
+            from: BBoard::parse_sq(from) as u32,
+            target: BBoard::parse_sq(to) as u32,
+            piece: Piece {
+                class,
+                color: self.turn,
+            },
+            captures: Some(Piece {
+                class: capture,
+                color: self.not_turn(),
+            }),
+        });
+        // self.unplace(piece, BBoard::parse_sq(from));
+        // self.place(piece, BBoard::parse_sq(to));
+        // self.place(piece, to);
+    }
     pub fn _move(&mut self, from: &str, to: &str, class: P) {
-      self.push_unchecked_move(Move {
-        from: BBoard::parse_sq(from) as u32,
-        target: BBoard::parse_sq(to) as u32,
-        piece: Piece {
-          class, color: self.turn
-        },
-        captures: None
-      });
+        self.push_unchecked_move(Move {
+            from: BBoard::parse_sq(from) as u32,
+            target: BBoard::parse_sq(to) as u32,
+            piece: Piece {
+                class,
+                color: self.turn,
+            },
+            captures: None,
+        });
         // self.unplace(piece, BBoard::parse_sq(from));
         // self.place(piece, BBoard::parse_sq(to));
         // self.place(piece, to);
@@ -335,7 +370,13 @@ impl BBoard {
 
     pub fn preview_moves_of(&mut self, sq: &str, class: P) {
         let i = BBoard::parse_sq(sq);
-        let moves = self.get_available_moves_at_index(i as u32, &Piece { class, color: self.turn });
+        let moves = self.get_available_moves_at_index(
+            i as u32,
+            &Piece {
+                class,
+                color: self.turn,
+            },
+        );
         self.preview(moves);
         self.pprint();
     }
@@ -557,8 +598,8 @@ impl BBoard {
     pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
         let bb = 1 << i;
         if bb & self.get_bboard_of_piece(piece) == 0 {
-          panic!("no piece found at {i}");
-        } 
+            panic!("no piece found at {i}");
+        }
 
         self.get_available_moves_of_piece_type(bb, piece)
     }
@@ -571,7 +612,19 @@ impl BBoard {
     fn push_unchecked_move(&mut self, m: Move) {
         self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
         if m.captures.is_some() {
-            self.unplace(m.captures.unwrap(), m.target as u8);
+            if m.piece.class == P::Pawn
+                && self.en_passant_target.is_some()
+                && m.target == self.en_passant_target.unwrap() as u32
+            {
+                println!("EN KDFAJDFKAJDLKFAD");
+                let actual_capture_index = match m.piece.color {
+                    Color::White => Direction::Down.value() + m.target as i64,
+                    Color::Black => Direction::Up.value() + m.target as i64, // Color::White => Direction::Up(self.white[0])
+                };
+                self.unplace(m.captures.unwrap(), actual_capture_index as u8);
+            } else {
+                self.unplace(m.captures.unwrap(), m.target as u8);
+            }
         }
 
         if (m.piece.class == P::Pawn) && m.from.abs_diff(m.target) == 16 {
@@ -626,8 +679,8 @@ impl BBoard {
                         & them_bitmap; // moves forward
                     let first_move_rank = RANK_7;
 
-                    let moves =
-                        Direction::Down.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+                    let moves = Direction::Down.shift_once(bb)
+                        | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
 
                     let fill = occluded_fill(bb, empty, Direction::Down);
                     (fill & moves) | attacks
@@ -636,13 +689,14 @@ impl BBoard {
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                    let en_passant_bitmap = &(1 as u64) << self.en_passant_target.unwrap_or(0);
                     let mut attacks = (Direction::UpRight.shift_once(bb)
                         | Direction::UpLeft.shift_once(bb))
-                        & them_bitmap;
+                        & (them_bitmap | en_passant_bitmap);
 
-                    if self.en_passant_target.is_some() {
-                        attacks |= &(1 as u64) << self.en_passant_target.unwrap()
-                    }; // moves forward
+                    // if self.en_passant_target.is_some() {
+                    // attacks |= &(1 as u64) << self.en_passant_target.unwrap()
+                    // }; // moves forward
 
                     let first_move_rank = RANK_2;
 
@@ -654,7 +708,14 @@ impl BBoard {
                 }
             }
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
-            P::King => king_attacks(bb) & !us_bitmap,
+            P::King => {
+                let cr = match piece.color {
+                    Color::White => &self.white_cr,
+                    Color::Black => &self.black_cr,
+                };
+
+                king_attacks(bb, empty, cr) & !us_bitmap
+            }
             P::Rook => rook_attacks(bb, empty) & !us_bitmap,
             P::Bishop => bishop_attacks(bb, empty) & !us_bitmap,
             P::Knight => knight_attacks(bb) & !us_bitmap,

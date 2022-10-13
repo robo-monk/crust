@@ -108,6 +108,9 @@ impl Direction {
         }
     }
 
+    pub fn shift_twice(&self, b: u64) -> u64 {
+        self.shift_once(self.shift_once(b))
+    }
     pub fn shift_once(&self, b: u64) -> u64 {
         match self {
             Direction::DownRight => (b << 9) & !A_FILE,

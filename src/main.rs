@@ -45,19 +45,36 @@ fn main() {
     let W_PAWN = &Piece::new(P::Pawn, Color::White);
     let B_QUEEN = &Piece::new(P::Queen, Color::Black);
     // bboard.preview_moves_of("a2", W_PAWN);
-    bboard._move("b2", "b4", P::Pawn);
-    bboard._move("b7", "b5", P::Pawn);
-    // bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
-    // bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
-    bboard.preview_moves_of("h2", P::Pawn);
+    // bboard._move("b2", "b4", P::Pawn);
+    // bboard._move("a7", "a5", P::Pawn);
+    // bboard._move("c2", "c4", P::Pawn);
+    // bboard._move("a7", "a5", P::Pawn);
+    // bboard._move("c4", "c5", P::Pawn);
+    // bboard._move("d7", "d5", P::Pawn);
+
+    // bboard.clone().preview_moves_of("c5", P::Pawn);
+    // bboard._capture("c5", "d6", P::Pawn, P::Pawn);
+    // bboard.clone().preview_moves_of("h7", P::Pawn);
+
+    // bboard.preview_moves_of("h2", P::Pawn);
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 
-    let ply = 7;
+    bboard._move("g1", "f3", P::Knight);
+    bboard._move("b8", "c6", P::Knight);
 
-    // let m = bboard.count_ply_moves(ply);
-    // println!("ply({ply}) -> {m}");
-    // bboard.pprint();
+    bboard._move("g2", "g3", P::Pawn);
+    bboard._move("e7", "e6", P::Pawn);
+    bboard._move("f1", "g2", P::Bishop);
+
+    bboard._move("d7", "d5", P::Pawn);
+    bboard.preview_moves_of("e1", P::King);
+
+    let ply = 3;
+
+    let m = bboard.count_ply_moves(ply);
+    println!("ply({ply}) -> {m}");
+    bboard.pprint();
 
     // loop {
     //     thread::sleep(time::Duration::from_millis(1000));
