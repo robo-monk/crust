@@ -58,10 +58,10 @@ impl Add<Direction> for usize {
         if target < 0
             || target >= 64
             || (rhs == Direction::Left || rhs == Direction::Right) && self_rank != target_rank
-            || (rhs == Direction::UpLeft
-                || rhs == Direction::UpRight
-                || rhs == Direction::DownLeft
-                || rhs == Direction::DownRight)
+            || (rhs == Direction::DownLeft
+                || rhs == Direction::DownRight
+                || rhs == Direction::UpLeft
+                || rhs == Direction::UpRight)
                 && (self_diag.0.abs_diff(target_diag.0) != 1
                     || self_diag.1.abs_diff(target_diag.1) != 1)
         {
@@ -89,49 +89,49 @@ impl Add<Direction> for usize {
 impl Direction {
     pub fn value(&self) -> i64 {
         match self {
-            Direction::UpRight => 9,
+            Direction::DownRight => 9,
             Direction::Right => 1,
-            Direction::DownRight => -7,
-            Direction::Down => -8,
-            Direction::DownLeft => -9,
+            Direction::UpRight => -7,
+            Direction::Up => -8,
+            Direction::UpLeft => -9,
             Direction::Left => -1,
-            Direction::UpLeft => 7,
-            Direction::Up => 8,
+            Direction::DownLeft => 7,
+            Direction::Down => 8,
 
-            // Direction::Down => 8,
+            // Direction::Up => 8,
             // Direction::Left => -1,
             // Direction::Right => 1,
-            // Direction::UpLeft => Direction::Up + Direction::Left, // 7
-            // Direction::DownLeft => Direction::Down + Direction::Left, // -9
-            // Direction::DownRight => Direction::Down + Direction::Right, // -7
+            // Direction::DownLeft => Direction::Down + Direction::Left, // 7
+            // Direction::UpLeft => Direction::Up + Direction::Left, // -9
+            // Direction::UpRight => Direction::Up + Direction::Right, // -7
             _ => panic!("invalid direction"),
         }
     }
 
     pub fn shift_once(&self, b: u64) -> u64 {
         match self {
-            Direction::UpRight => (b << 9) & !A_FILE,
+            Direction::DownRight => (b << 9) & !A_FILE,
             Direction::Right => (b << 1) & !A_FILE,
-            Direction::DownRight => (b >> 7) & !A_FILE,
-            Direction::Down => b >> 8,
-            Direction::DownLeft =>  (b >> 9) & !H_FILE,
+            Direction::UpRight => (b >> 7) & !A_FILE,
+            Direction::Up => b >> 8,
+            Direction::UpLeft =>  (b >> 9) & !H_FILE,
             Direction::Left => (b << 1) & !H_FILE,
-            Direction::UpLeft => (b << 7) & !H_FILE,
-            Direction::Up => b << 8,
+            Direction::DownLeft => (b << 7) & !H_FILE,
+            Direction::Down => b << 8,
             _ => panic!("invalid direction"),
         }
     }
 
     pub fn avoid_wrap(&self) -> u64 {
         match self {
-            Direction::UpRight => 0xfefefefefefefe00,
+            Direction::DownRight => 0xfefefefefefefe00,
             Direction::Right => 0xfefefefefefefefe,
-            Direction::DownRight => 0x00fefefefefefefe,
-            Direction::Down => 0x00ffffffffffffff,
-            Direction::DownLeft => 0x007f7f7f7f7f7f7f,
+            Direction::UpRight => 0x00fefefefefefefe,
+            Direction::Up => 0x00ffffffffffffff,
+            Direction::UpLeft => 0x007f7f7f7f7f7f7f,
             Direction::Left => 0x7f7f7f7f7f7f7f7f,
-            Direction::UpLeft => 0x7f7f7f7f7f7f7f00,
-            Direction::Up => 0xffffffffffffff00,
+            Direction::DownLeft => 0x7f7f7f7f7f7f7f00,
+            Direction::Down => 0xffffffffffffff00,
         }
     }
 
@@ -270,8 +270,8 @@ impl Piece {
                     || piece.is_color(Color::Black) && rank == 1;
 
                 let dir = match piece.color {
-                    Color::Black => Direction::Down,
-                    Color::White => Direction::Up,
+                    Color::Black => Direction::Up,
+                    Color::White => Direction::Down,
                 };
 
                 if first_move {
@@ -281,43 +281,43 @@ impl Piece {
                 }
             }
             P::King => vec![
-                vec![Direction::Up],
                 vec![Direction::Down],
+                vec![Direction::Up],
                 vec![Direction::Left],
                 vec![Direction::Right],
             ],
             P::Rook => vec![
-                vec![Direction::Up],
                 vec![Direction::Down],
+                vec![Direction::Up],
                 vec![Direction::Left],
                 vec![Direction::Right],
             ],
             P::Bishop => vec![
-                vec![Direction::UpRight],
-                vec![Direction::UpLeft],
                 vec![Direction::DownRight],
                 vec![Direction::DownLeft],
+                vec![Direction::UpRight],
+                vec![Direction::UpLeft],
             ],
             P::Queen => vec![
-                vec![Direction::Down],
                 vec![Direction::Up],
+                vec![Direction::Down],
                 vec![Direction::Left],
                 vec![Direction::Right],
-                vec![Direction::UpRight],
-                vec![Direction::UpLeft],
                 vec![Direction::DownRight],
                 vec![Direction::DownLeft],
+                vec![Direction::UpRight],
+                vec![Direction::UpLeft],
             ],
             P::Knight => {
                 vec![
-                    vec![Direction::Up, Direction::Up, Direction::Left],
-                    vec![Direction::Up, Direction::Up, Direction::Right],
                     vec![Direction::Down, Direction::Down, Direction::Left],
                     vec![Direction::Down, Direction::Down, Direction::Right],
-                    vec![Direction::Left, Direction::Left, Direction::Up],
+                    vec![Direction::Up, Direction::Up, Direction::Left],
+                    vec![Direction::Up, Direction::Up, Direction::Right],
                     vec![Direction::Left, Direction::Left, Direction::Down],
-                    vec![Direction::Right, Direction::Right, Direction::Up],
+                    vec![Direction::Left, Direction::Left, Direction::Up],
                     vec![Direction::Right, Direction::Right, Direction::Down],
+                    vec![Direction::Right, Direction::Right, Direction::Up],
                 ]
             }
             _ => panic!("invalid piece?"),

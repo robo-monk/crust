@@ -43,7 +43,7 @@ impl Piece for Queen {
       if board.turn != self.color { return vec![] }
       let mut target_squares: Vec<JoinHandle<Vec<usize>>> = vec![];
 
-      for direction in [Direction::Up, Direction::Left] {
+      for direction in [Direction::Down, Direction::Left] {
         // let b = board.clone();
         // target_squares.push(thread::spawn(move || {
           let mut _target_squares: Vec<usize> = vec![];

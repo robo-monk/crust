@@ -87,16 +87,16 @@ fn sliding_attacks(slider: u64, empty: u64, direction: Direction) -> u64 {
 }
 
 fn bishop_attacks(_bb: u64, empty: u64) -> u64 {
-    sliding_attacks(_bb, empty, Direction::UpLeft)
-        | sliding_attacks(_bb, empty, Direction::UpRight)
+    sliding_attacks(_bb, empty, Direction::DownLeft)
         | sliding_attacks(_bb, empty, Direction::DownRight)
-        | sliding_attacks(_bb, empty, Direction::DownLeft)
+        | sliding_attacks(_bb, empty, Direction::UpRight)
+        | sliding_attacks(_bb, empty, Direction::UpLeft)
 }
 
 fn rook_attacks(_bb: u64, empty: u64) -> u64 {
-    sliding_attacks(_bb, empty, Direction::Up)
+    sliding_attacks(_bb, empty, Direction::Down)
         | sliding_attacks(_bb, empty, Direction::Right)
-        | sliding_attacks(_bb, empty, Direction::Down)
+        | sliding_attacks(_bb, empty, Direction::Up)
         | sliding_attacks(_bb, empty, Direction::Left)
 }
 
@@ -116,7 +116,7 @@ fn knight_attacks(knights: u64) -> u64 {
 fn king_attacks(bb: u64) -> u64 {
     let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
     let _bb = bb | attacks;
-    attacks | Direction::Up.shift_once(_bb) | Direction::Down.shift_once(_bb)
+    attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
 }
 
 fn king_queen_castle(bb: u64) -> u64 {
@@ -305,13 +305,13 @@ impl BBoard {
         }
 
         if self.en_passant_target.is_some() {
-            board._set_square(
-                self.en_passant_target.unwrap(),
-                Some(Piece {
-                    class: P::Preview,
-                    color: Color::White,
-                }),
-            );
+            // board._set_square(
+            //     self.en_passant_target.unwrap(),
+            //     Some(Piece {
+            //         class: P::Preview,
+            //         color: Color::White,
+            //     }),
+            // );
         }
 
         board.print();
@@ -333,9 +333,9 @@ impl BBoard {
         self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| bb | moves);
     }
 
-    pub fn preview_moves_of(&mut self, sq: &str, piece: &Piece) {
+    pub fn preview_moves_of(&mut self, sq: &str, class: P) {
         let i = BBoard::parse_sq(sq);
-        let moves = self.get_available_moves_at_index(i as u32, piece);
+        let moves = self.get_available_moves_at_index(i as u32, &Piece { class, color: self.turn });
         self.preview(moves);
         self.pprint();
     }
@@ -556,6 +556,10 @@ impl BBoard {
     }
     pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
         let bb = 1 << i;
+        if bb & self.get_bboard_of_piece(piece) == 0 {
+          panic!("no piece found at {i}");
+        } 
+
         self.get_available_moves_of_piece_type(bb, piece)
     }
 
@@ -576,7 +580,7 @@ impl BBoard {
             // let i = &((1 as u64) << (m.target);
             let en_passant_index = match m.piece.color {
                 Color::White => Direction::Down.value() + m.target as i64,
-                Color::Black => Direction::Up.value() + m.target as i64, // Color::White => Direction::Down(self.white[0])
+                Color::Black => Direction::Up.value() + m.target as i64, // Color::White => Direction::Up(self.white[0])
             };
 
             self.en_passant_target = Some(en_passant_index as usize);
@@ -617,23 +621,23 @@ impl BBoard {
                 // let c = if piece.color == Color::Black { -1 } else { 1 };
                 if piece.color == Color::Black {
                     // let attacks = ((bb << 9 & !A_FILE) | (bb << 7 & !H_FILE)) & them_bitmap; // moves forward
-                    let attacks = (Direction::UpRight.shift_once(bb)
-                        | Direction::UpLeft.shift_once(bb))
+                    let attacks = (Direction::DownRight.shift_once(bb)
+                        | Direction::DownLeft.shift_once(bb))
                         & them_bitmap; // moves forward
                     let first_move_rank = RANK_7;
 
                     let moves =
-                        Direction::Up.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+                        Direction::Down.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
 
-                    let fill = occluded_fill(bb, empty, Direction::Up);
+                    let fill = occluded_fill(bb, empty, Direction::Down);
                     (fill & moves) | attacks
                 } else {
                     let c = 1;
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
                     // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
-                    let mut attacks = (Direction::DownRight.shift_once(bb)
-                        | Direction::DownLeft.shift_once(bb))
+                    let mut attacks = (Direction::UpRight.shift_once(bb)
+                        | Direction::UpLeft.shift_once(bb))
                         & them_bitmap;
 
                     if self.en_passant_target.is_some() {
@@ -642,10 +646,10 @@ impl BBoard {
 
                     let first_move_rank = RANK_2;
 
-                    let moves = (Direction::Down.shift_once(bb) | (bb & first_move_rank) >> 16)
+                    let moves = (Direction::Up.shift_once(bb) | (bb & first_move_rank) >> 16)
                         & !them_bitmap; // moves forward
 
-                    let fill = occluded_fill(bb, empty, Direction::Down);
+                    let fill = occluded_fill(bb, empty, Direction::Up);
                     (fill & moves) | attacks
                 }
             }

@@ -46,9 +46,10 @@ fn main() {
     let B_QUEEN = &Piece::new(P::Queen, Color::Black);
     // bboard.preview_moves_of("a2", W_PAWN);
     bboard._move("b2", "b4", P::Pawn);
+    bboard._move("b7", "b5", P::Pawn);
     // bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
     // bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
-    bboard.preview_moves_of("b4", W_PAWN);
+    bboard.preview_moves_of("h2", P::Pawn);
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 

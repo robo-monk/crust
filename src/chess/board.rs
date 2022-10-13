@@ -114,7 +114,7 @@ impl Board {
                     match piece.unwrap().color {
                         Color::White => {
                             self._set_square(
-                                (to + Direction::Up)
+                                (to + Direction::Down)
                                     .unwrap_or_else(|| panic!("invalid en passant move")),
                                 None,
                             );
