@@ -68,14 +68,17 @@ fn main() {
     bboard._move("f1", "g2", P::Bishop);
 
     bboard._move("d7", "d5", P::Pawn);
-    bboard.preview_moves_of("e1", P::King);
+    bboard.clone().preview_moves_of("e1", P::King);
+    bboard.clone().preview_attackers_of("e4");
 
-    let ply = 3;
+    // let ply = 3;
 
-    let m = bboard.count_ply_moves(ply);
-    println!("ply({ply}) -> {m}");
-    bboard.pprint();
+    // let m = bboard.count_ply_moves(ply);
+    // println!("ply({ply}) -> {m}");
+    // bboard.pprint();
 
+    // println!("sq g1 {}", BBoard::parse_sq("a8"));
+    // println!("sq h1 {}", BBoard::parse_sq("h1"));
     // loop {
     //     thread::sleep(time::Duration::from_millis(1000));
     //     bboard.make_random_move();
