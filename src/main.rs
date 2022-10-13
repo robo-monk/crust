@@ -14,6 +14,10 @@ fn main() {
     let board = Board::from_fen(&fen);
     let mut bboard = BBoard::new();
 
+    bboard.white_cr = board.white_cr;
+    bboard.black_cr = board.black_cr;
+    bboard.en_passant_target = board.en_passant;
+
     for (i, sq) in board.squares.iter().enumerate() {
         if sq.is_none() { continue }
         let piece = sq.unwrap();
@@ -41,21 +45,21 @@ fn main() {
     let W_PAWN = &Piece::new(P::Pawn, Color::White);
     let B_QUEEN = &Piece::new(P::Queen, Color::Black);
     // bboard.preview_moves_of("a2", W_PAWN);
-    // bboard.register_unchecked_move("b2", "b4", Piece::new(P::Pawn, Color::White));
+    bboard._move("b2", "b4", P::Pawn);
     // bboard.register_unchecked_move("c7", "c5", Piece::new(P::Pawn, Color::Black));
     // bboard.register_unchecked_move("e7", "e6", Piece::new(P::Pawn, Color::Black));
-    // bboard.preview_moves_of("b4", W_PAWN);
+    bboard.preview_moves_of("b4", W_PAWN);
     // bboard.preview_moves_of("d8", B_QUEEN);
     // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
 
-    let ply = 3;
+    let ply = 7;
 
-    let m = bboard.count_ply_moves(ply);
-    println!("ply({ply}) -> {m}");
-    bboard.pprint();
+    // let m = bboard.count_ply_moves(ply);
+    // println!("ply({ply}) -> {m}");
+    // bboard.pprint();
 
     // loop {
-    //     thread::sleep(time::Duration::from_millis(50));
+    //     thread::sleep(time::Duration::from_millis(1000));
     //     bboard.make_random_move();
     //     bboard.pprint();
     // }

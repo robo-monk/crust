@@ -16,14 +16,14 @@ pub struct Board {
     pub squares: [Option<Piece>; 64],
     pub pieces: HashMap<u8, Piece>,
     pub en_passant: Option<usize>,
-    white_cr: CastlingRights,
-    black_cr: CastlingRights,
+    pub white_cr: CastlingRights,
+    pub black_cr: CastlingRights,
 }
 
 #[derive(Debug, Clone)]
-struct CastlingRights {
-    queen: bool,
-    king: bool,
+pub struct CastlingRights {
+    pub queen: bool,
+    pub king: bool,
 }
 
 impl Board {

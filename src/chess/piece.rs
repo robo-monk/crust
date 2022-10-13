@@ -182,6 +182,7 @@ pub enum P {
     Preview,
 }
 
+
 #[derive(Debug, Clone, Copy)]
 pub struct Piece {
     pub class: P,

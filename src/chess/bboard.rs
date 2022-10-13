@@ -1,4 +1,4 @@
-use super::board::Board;
+use super::board::{Board, CastlingRights};
 use super::piece::{Color, Direction, Piece, P};
 use rand::Rng; // 0.8.5
 
@@ -119,6 +119,13 @@ fn king_attacks(bb: u64) -> u64 {
     attacks | Direction::Up.shift_once(_bb) | Direction::Down.shift_once(_bb)
 }
 
+fn king_queen_castle(bb: u64) -> u64 {
+    todo!()
+}
+
+fn king_king_castle(bb: u64) -> u64 {
+    todo!()
+}
 // U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
 
 // U64 fileMask(int sq) {return C64(0x0101010101010101) << (sq & 7);}
@@ -144,6 +151,9 @@ pub struct BBoard {
     white: [u64; 7],
     black: [u64; 7],
     turn: Color,
+    pub en_passant_target: Option<usize>,
+    pub white_cr: CastlingRights,
+    pub black_cr: CastlingRights,
 }
 
 impl BBoard {
@@ -152,6 +162,26 @@ impl BBoard {
             turn: Color::White,
             white: [0; 7],
             black: [0; 7],
+            // todo
+            /*
+            if 563: & (them_bitamp | en_passant_mask)
+            411: if m.target = enpassant square && m.pice is Pawn
+              capture above / below pawn depending on color
+
+            castling rights
+
+            king capture -> if king is captured the game is over
+            */
+            en_passant_target: None,
+
+            white_cr: CastlingRights {
+                queen: true,
+                king: true,
+            },
+            black_cr: CastlingRights {
+                queen: true,
+                king: true,
+            },
         }
     }
     pub fn shift_turn(&mut self) -> () {
@@ -172,13 +202,23 @@ impl BBoard {
 
     pub fn make_unchecked_move(&mut self, from: u8, to: u8, piece: Piece) {
         self.unplace(piece, from);
+
         self.place(piece, to);
+
         self.shift_turn();
     }
 
-    pub fn register_unchecked_move(&mut self, from: &str, to: &str, piece: Piece) {
-        self.unplace(piece, BBoard::parse_sq(from));
-        self.place(piece, BBoard::parse_sq(to));
+    pub fn _move(&mut self, from: &str, to: &str, class: P) {
+      self.push_unchecked_move(Move {
+        from: BBoard::parse_sq(from) as u32,
+        target: BBoard::parse_sq(to) as u32,
+        piece: Piece {
+          class, color: self.turn
+        },
+        captures: None
+      });
+        // self.unplace(piece, BBoard::parse_sq(from));
+        // self.place(piece, BBoard::parse_sq(to));
         // self.place(piece, to);
     }
 
@@ -264,6 +304,16 @@ impl BBoard {
             }
         }
 
+        if self.en_passant_target.is_some() {
+            board._set_square(
+                self.en_passant_target.unwrap(),
+                Some(Piece {
+                    class: P::Preview,
+                    color: Color::White,
+                }),
+            );
+        }
+
         board.print();
         let available_moves = self.count_available_moves();
         println!("> {:?} to play", self.turn);
@@ -347,6 +397,10 @@ impl BBoard {
 
                 loop_through_indeces(captures, |target| {
                     for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
+                        if i == 6 {
+                            break;
+                        }; //gross, skip preview looping
+
                         if (piece_bb & (1 << target)) > 0 {
                             // println!("captures a {:?}", PIECES[i as usize]);
                             let captured_piece_type = PIECES[i as usize];
@@ -385,12 +439,6 @@ impl BBoard {
         // println!("can take {} actions", possible_actions.len());
     }
 
-    fn push_unchecked_move(&mut self, m: Move) {
-        self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
-        if m.captures.is_some() {
-          self.unplace(m.captures.unwrap(), m.target as u8);
-        }
-    }
     // pub push_unch
 
     // self.make_unchecked_move(target as u8, from as u8, piece);
@@ -516,6 +564,38 @@ impl BBoard {
         self.get_available_moves_of_piece_type(bb, piece)
     }
 
+    fn push_unchecked_move(&mut self, m: Move) {
+        self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
+        if m.captures.is_some() {
+            self.unplace(m.captures.unwrap(), m.target as u8);
+        }
+
+        if (m.piece.class == P::Pawn) && m.from.abs_diff(m.target) == 16 {
+            println!("en passant sq");
+
+            // let i = &((1 as u64) << (m.target);
+            let en_passant_index = match m.piece.color {
+                Color::White => Direction::Down.value() + m.target as i64,
+                Color::Black => Direction::Up.value() + m.target as i64, // Color::White => Direction::Down(self.white[0])
+            };
+
+            self.en_passant_target = Some(en_passant_index as usize);
+
+            // self.place(
+            //     Piece {
+            //         class: P::Preview,
+            //         color: Color::White,
+            //     },
+            //     en_passant_index as u8,
+            // );
+
+            // println!("{:64b}", en_passant_index);
+            // println!("{}", en_passant_index);
+        } else {
+            self.en_passant_target = None;
+        }
+    }
+
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
         let us_bitmap = (match piece.color {
             Color::White => self.white,
@@ -535,28 +615,38 @@ impl BBoard {
         match piece.class {
             P::Pawn => {
                 // let c = if piece.color == Color::Black { -1 } else { 1 };
-                if piece.color == Color::Black  {
-                  let attacks = ((bb << 9 & !A_FILE) | (bb << 7 & !H_FILE)) & them_bitmap; // moves forward
-                  let attacks = (Direction::UpRight.shift_once(bb) | Direction::UpLeft.shift_once(bb)) & them_bitmap; // moves forward
-                  let first_move_rank = RANK_7;
+                if piece.color == Color::Black {
+                    // let attacks = ((bb << 9 & !A_FILE) | (bb << 7 & !H_FILE)) & them_bitmap; // moves forward
+                    let attacks = (Direction::UpRight.shift_once(bb)
+                        | Direction::UpLeft.shift_once(bb))
+                        & them_bitmap; // moves forward
+                    let first_move_rank = RANK_7;
 
-                  let moves = Direction::Up.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+                    let moves =
+                        Direction::Up.shift_once(bb) | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
 
-                  let fill = occluded_fill(bb, empty, Direction::Up);
-                  (fill & moves) | attacks
+                    let fill = occluded_fill(bb, empty, Direction::Up);
+                    (fill & moves) | attacks
                 } else {
-                  let c = 1;
-                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
-                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
-                  // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
-                  let attacks = (Direction::DownRight.shift_once(bb) | Direction::DownLeft.shift_once(bb)) & them_bitmap; // moves forward
+                    let c = 1;
+                    // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                    // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                    // let attacks = ((bb >> (9 * c) & !A_FILE) | (bb >> (7 * c) & !H_FILE)) & them_bitmap; // moves forward
+                    let mut attacks = (Direction::DownRight.shift_once(bb)
+                        | Direction::DownLeft.shift_once(bb))
+                        & them_bitmap;
 
-                  let first_move_rank = RANK_2;
+                    if self.en_passant_target.is_some() {
+                        attacks |= &(1 as u64) << self.en_passant_target.unwrap()
+                    }; // moves forward
 
-                  let moves = (Direction::Down.shift_once(bb) | (bb & first_move_rank) >> 16) & !them_bitmap; // moves forward
+                    let first_move_rank = RANK_2;
 
-                  let fill = occluded_fill(bb, empty, Direction::Down);
-                  (fill & moves) | attacks
+                    let moves = (Direction::Down.shift_once(bb) | (bb & first_move_rank) >> 16)
+                        & !them_bitmap; // moves forward
+
+                    let fill = occluded_fill(bb, empty, Direction::Down);
+                    (fill & moves) | attacks
                 }
             }
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
