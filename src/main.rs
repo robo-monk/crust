@@ -69,7 +69,9 @@ fn main() {
 
     bboard._move("d7", "d5", P::Pawn);
     bboard.clone().preview_moves_of("e1", P::King);
-    bboard.clone().preview_attackers_of("e4");
+    // bboard.count_attackers_of_square("e4");
+    bboard.preview_attackers();
+    // bboard.preview_attackers_of("e4");
 
     // let ply = 3;
 

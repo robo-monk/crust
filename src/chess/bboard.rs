@@ -387,11 +387,25 @@ impl BBoard {
         self.pprint();
     }
 
-    pub fn preview_attackers_of(&mut self, sq: &str) {
-        let i = BBoard::parse_sq(sq);
-        let attackers = self.get_attackers_of_square(&(1 as u64) << i, self.not_turn());
+    pub fn preview_attackers(&mut self) {
+        let attackers = self.attack_map_of(self.not_turn());
         self.preview(attackers);
         self.pprint();
+    }
+
+    pub fn attack_map_of(&self, color: Color) -> u64 {
+        let us_bitmap = self.get_side_bb(color);
+        let them_bitmap = self.them_bitmap();
+        let empty = !(us_bitmap | them_bitmap);
+
+        let op_attacks =  pawn_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Pawn}), color) |
+            bishop_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Bishop}), empty) |
+            rook_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Rook}), empty) |
+            queen_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Queen}), empty) |
+            king_attacks(self.get_bboard_of_piece(&Piece { color, class: P::King}), empty, &CastlingRights { queen: false, king: false }) |
+            knight_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Knight}));
+
+        op_attacks & !them_bitmap
     }
 
     pub fn preview_moves(&mut self, piece: &Piece) {
@@ -735,7 +749,7 @@ impl BBoard {
         }
     }
 
-    pub fn get_attackers_of_square(&self, mut bb: u64, color: Color) -> u64 {
+    pub fn count_attackers_of_square(&self, bb: u64, color: Color) -> u32 {
         println!("bb {:64b}", bb);
         let us_bitmap = self.us_bitmap();
         let them_bitmap = self.them_bitmap();
@@ -749,7 +763,7 @@ impl BBoard {
             king_attacks(self.get_bboard_of_piece(&Piece { color, class: P::King}), empty, &CastlingRights { queen: false, king: false }) |
             knight_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Knight}));
 
-        bb & op_attacks
+        (bb & op_attacks).count_ones()
     }
 
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
