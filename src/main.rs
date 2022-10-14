@@ -68,7 +68,7 @@ fn main() {
     bboard._move("f1", "g2", P::Bishop);
 
     bboard._move("d7", "d5", P::Pawn);
-    // bboard.clone().preview_moves_of("e1", P::King);
+    bboard.clone().preview_moves_of("e1", P::King);
 
     bboard._move("e5", "e6", P::Pawn);
     bboard._move("b7", "b6", P::Pawn);
@@ -79,11 +79,12 @@ fn main() {
     // bboard.count_attackers_of_square("e4");
     // bboard._move("f8", "e7", P::Bishop);
     bboard.clone().preview_attackers();
+    bboard.clone().preview_moves_of("e1", P::King);
 
     // bboard.clone().preview_moves_of("a6", P::Bishop);
     // bboard.preview_attackers_of("e4");
 
-    // let ply = 3;
+    let ply = 3;
 
     // let m = bboard.count_ply_moves(ply);
     // println!("ply({ply}) -> {m}");
@@ -91,11 +92,11 @@ fn main() {
 
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
     // println!("sq h1 {}", BBoard::parse_sq("h1"));
-    // loop {
-    //     thread::sleep(time::Duration::from_millis(1000));
-    //     bboard.make_random_move();
-    //     bboard.pprint();
-    // }
+    loop {
+        thread::sleep(time::Duration::from_millis(1000));
+        bboard.make_random_move();
+        bboard.pprint();
+    }
 
 
     // bboard.pprint();

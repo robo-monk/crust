@@ -123,7 +123,9 @@ fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRigh
     if cr.queen {
         (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty_and_not_under_attack))
             & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
-    } else {0}
+    } else {
+        0
+    }
 }
 
 fn king_king_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
@@ -131,7 +133,9 @@ fn king_king_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRight
         (Direction::Right
             .shift_once((Direction::Right.shift_once(bb)) & empty_and_not_under_attack))
             & (Direction::Right.shift_twice(bb) & empty_and_not_under_attack)
-    } else { 0 }
+    } else {
+        0
+    }
 }
 
 fn pawn_attacks(bb: u64, color: Color) -> u64 {
@@ -393,7 +397,6 @@ impl BBoard {
 
         // bishop_attacks(sqs, )
         todo!()
-
     }
 
     pub fn attack_map_of(&self, color: Color) -> u64 {
@@ -508,6 +511,7 @@ impl BBoard {
                         if (piece_bb & (1 << target)) > 0 {
                             // println!("captures a {:?}", PIECES[i as usize]);
                             let captured_piece_type = PIECES[i as usize];
+
                             let captures = Piece {
                                 class: captured_piece_type,
                                 color: self.not_turn(),
@@ -532,6 +536,9 @@ impl BBoard {
         // / Generate random number in the range [0, 99]
         let action_i = rand::thread_rng().gen_range(0..possible_actions.len());
         let rmove = possible_actions.get(action_i).unwrap();
+        if rmove.piece.class == P::King && rmove.from.abs_diff(rmove.target) > 8 {
+            println!("CASTLE")
+        }
         println!(
             "AGENT > from {} possible actions => chose #{action_i} > {:?}",
             possible_actions.len(),
