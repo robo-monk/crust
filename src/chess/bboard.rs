@@ -116,11 +116,12 @@ fn knight_attacks(knights: u64) -> u64 {
 fn king_attacks(bb: u64, empty: u64) -> u64 {
     let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
     let _bb = bb | attacks;
-    attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
+    (attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)) & empty
 }
 
 fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
     if cr.queen {
+        println!("CASL@WQQQQQ");
         (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty_and_not_under_attack))
             & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
     } else {
@@ -340,44 +341,19 @@ impl BBoard {
             }
         }
 
-        if self.en_passant_target.is_some() {
-            // board._set_square(
-            //     self.en_passant_target.unwrap(),
-            //     Some(Piece {
-            //         class: P::Preview,
-            //         color: Color::White,
-            //     }),
-            // );
-        }
-
         board.print();
         let available_moves = self.count_available_moves();
         println!("> {:?} to play", self.turn);
         println!("> {available_moves} available moves...");
-
-        // bb.reverse_bits();
-        // for i in 0..8 {
-        //     // change it to get range
-        //     let lsb = bb & 1;
-
-        //     if lsb
-        //     bb >>= 1;
-        // }
     }
 
     pub fn preview(&mut self, moves: u64) {
         self.mutate_bboard_of_piece(&Piece::new(P::Preview, Color::White), |bb: u64| bb | moves);
     }
 
-    pub fn preview_moves_of(&mut self, sq: &str, class: P) {
+    pub fn preview_moves_of(&mut self, sq: &str, class: P, color: Color) {
         let i = BBoard::parse_sq(sq);
-        let moves = self.get_available_moves_at_index(
-            i as u32,
-            &Piece {
-                class,
-                color: self.turn,
-            },
-        );
+        let moves = self.get_available_moves_at_index(i as u32, &Piece { class, color });
         self.preview(moves);
         self.pprint();
     }
@@ -389,7 +365,7 @@ impl BBoard {
     }
 
     pub fn get_sqs_attackers(&self, sqs: u64, them_color: Color) -> u64 {
-        let us_bitmap = self.get_side_bb(them_color.not());
+        let us_bitmap = self.get_side_bitmap(them_color.not());
         // let them_bitmap = self.get_side_bb();
         // let them_bitmap = us;
         // let them_bitmap = self.them_bitmap();
@@ -400,8 +376,8 @@ impl BBoard {
     }
 
     pub fn attack_map_of(&self, color: Color) -> u64 {
-        let us_bitmap = self.get_side_bb(color.not());
-        let them_bitmap = self.get_side_bb(color);
+        let us_bitmap = self.get_side_bitmap(color.not());
+        let them_bitmap = self.get_side_bitmap(color);
         // let us_bitmap = 0;
         // let them_bitmap = them_bitmap;
 
@@ -558,59 +534,56 @@ impl BBoard {
             return 1;
         }
 
-        let targets = self.get_available_targets(self.turn);
-
         let bb = self.get_turns_bb_array();
         let them = self.them_bitmap();
-        // maybe this is slow, convert to for in
-        // get_available_moves_at_index
-        // for (i, class) in PIECES.iter().enumerate() {
-
         let mut move_count = 0;
         for piece_i in 0..6 {
             let piece = Piece::new(PIECES[piece_i], self.turn);
             let piece_bb = bb[piece_i];
-            // println!("| START [{:?}] > {i}", piece);
-            // println!("| {:64b}", piece_bb);
-            //  self.get_available_moves_at_index()
-            // let i_mask = 1 << i;
-            // fn loop_through_indeces(bb: u64, reducer: f)
             loop_through_indeces(piece_bb, |from| {
-                // println!("|> - {:?} > {i}", piece);
                 let moves = self.get_available_moves_at_index(from, &piece);
-                // move_count += moves.count_ones();
-
                 let captures = moves & them;
+
                 loop_through_indeces(moves & !captures, |target| {
-                    // println!("---> - from: ({i}) > to ({ii})");
-                    // self.make_unchecked_move()
-                    // let mut subboard = self;
-                    self.make_unchecked_move(from as u8, target as u8, piece);
-                    move_count += self.count_ply_moves(depth - 1);
-                    self.make_unchecked_move(target as u8, from as u8, piece);
-                    // self.make_unchecked_move(i as u8, ii as u8, piece);
-                    // self.clone().mutate_bboard_of_piece()
+                    let mut c = self.clone();
+
+                    c.push_unchecked_move(Move {
+                        from,
+                        target,
+                        piece,
+                        captures: None,
+                    });
+
+                    move_count += c.count_ply_moves(depth - 1);
                 });
 
                 loop_through_indeces(captures, |target| {
-                    // println!("---> - from: ({i}) > to ({ii})");
-                    // self.make_unchecked_move()
-                    // let mut subboard = self;
-                    for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
+                    // println!("capture {target}");
+                    for i in 0..6 {
+                        let piece = Piece::new(PIECES[i], self.turn);
+                        let piece_bb = bb[piece_i];
+                    // for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
+                        // println!("{:64b}", (*piece_bb & (1 << target)));
+                        // println!("{:64b}", (piece_bb));
+                        // println!("{:64b}", (1 << target));
                         if (piece_bb & (1 << target)) > 0 {
-                            // println!("captures a {:?}", PIECES[i as usize]);
                             let captured_piece_type = PIECES[i as usize];
                             let captured_piece = Piece {
                                 class: captured_piece_type,
                                 color: self.not_turn(),
                             };
-                            // bb[i]
 
-                            self.unplace(captured_piece, target as u8);
-                            self.make_unchecked_move(from as u8, target as u8, piece);
-                            move_count += self.count_ply_moves(depth - 1);
-                            self.make_unchecked_move(target as u8, from as u8, piece);
-                            self.place(captured_piece, target as u8);
+                            let mut c = self.clone();
+                            c.push_unchecked_move(Move {
+                                from,
+                                target,
+                                piece,
+                                captures: Some(captured_piece),
+                            });
+
+                            move_count += c.count_ply_moves(depth - 1);
+                            // self.make_unchecked_move(target as u8, from as u8, piece);
+                            // self.place(captured_piece, target as u8);
                             break;
                         }
                     }
@@ -618,14 +591,11 @@ impl BBoard {
                     // self.make_unchecked_move(i as u8, ii as u8, piece);
                     // self.clone().mutate_bboard_of_piece()
                 });
-            });
 
-            // println!("| END {:?} > {i} \n", piece);
+            });
         }
 
         move_count
-        // let available_moves = self.count_available_moves();
-        // 0
     }
 
     pub fn not_turn(&self) -> Color {
@@ -634,7 +604,7 @@ impl BBoard {
             Color::Black => Color::White,
         }
     }
-    pub fn get_side_bb(&self, side: Color) -> u64 {
+    pub fn get_side_bitmap(&self, side: Color) -> u64 {
         (match side {
             Color::White => self.black,
             Color::Black => self.white,
@@ -644,10 +614,10 @@ impl BBoard {
     }
 
     pub fn us_bitmap(&self) -> u64 {
-        self.get_side_bb(self.turn)
+        self.get_side_bitmap(self.turn)
     }
     pub fn them_bitmap(&self) -> u64 {
-        self.get_side_bb(self.not_turn())
+        self.get_side_bitmap(self.not_turn())
     }
 
     pub fn get_them_bb_array(&self) -> [u64; 7] {
@@ -679,6 +649,7 @@ impl BBoard {
 
     pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
         let bb = 1 << i;
+
         if bb & self.get_bboard_of_piece(piece) == 0 {
             panic!("no piece found at {i}");
         }
@@ -691,14 +662,19 @@ impl BBoard {
         self.get_available_moves_of_piece_type(bb, piece)
     }
 
-    fn push_unchecked_move(&mut self, m: Move) {
-        self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
+    fn update_board_state_from_move(&mut self, m: Move) -> Option<Self> {
+        let mut self_clone = None;
+
         if m.captures.is_some() {
-            if m.piece.class == P::Pawn
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
+
+            if m.piece.is_pawn()
                 && self.en_passant_target.is_some()
+                && m.captures.unwrap().is_pawn()
                 && m.target == self.en_passant_target.unwrap() as u32
             {
-                println!("EN KDFAJDFKAJDLKFAD");
                 let actual_capture_index = match m.piece.color {
                     Color::White => Direction::Down.value() + m.target as i64,
                     Color::Black => Direction::Up.value() + m.target as i64, // Color::White => Direction::Up(self.white[0])
@@ -710,7 +686,11 @@ impl BBoard {
         }
 
         if (m.piece.class == P::Pawn) && m.from.abs_diff(m.target) == 16 {
-            println!("en passant sq");
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
+
+            // println!("en passant sq");
 
             // let i = &((1 as u64) << (m.target);
             let en_passant_index = match m.piece.color {
@@ -719,41 +699,38 @@ impl BBoard {
             };
 
             self.en_passant_target = Some(en_passant_index as usize);
-
-            // self.place(
-            //     Piece {
-            //         class: P::Preview,
-            //         color: Color::White,
-            //     },
-            //     en_passant_index as u8,
-            // );
-
-            // println!("{:64b}", en_passant_index);
-            // println!("{}", en_passant_index);
-        } else {
+        } else if self.en_passant_target.is_some() {
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
             self.en_passant_target = None;
         }
 
-        if (m.piece.class == P::King) {
+        let _cr = self.get_castling_rights(m.piece.color);
+        if m.piece.class == P::King && (_cr.king || _cr.queen) {
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
+
             let (cr_from, cr_to) = match (m.piece.color, m.target) {
                 // white king side castling
                 (Color::White, 62) => {
-                    self.white_cr.king = false;
+                    // self.white_cr.king = false;
                     (63, 63 + Direction::Left.value() + Direction::Left.value())
                 }
                 // white queen side castling
                 (Color::White, 58) => {
-                    self.white_cr.queen = false;
+                    // self.white_cr.queen = false;
                     (58, 58 + Direction::Right.value() + Direction::Right.value())
                 }
                 // black king side castling
                 (Color::Black, 6) => {
-                    self.black_cr.king = false;
+                    // self.black_cr.king = false;
                     (7, 7 + Direction::Left.value() + Direction::Left.value())
                 }
                 // black queen side castling
                 (Color::Black, 1) => {
-                    self.black_cr.queen = false;
+                    // self.black_cr.queen = false;
                     (0, 0 + Direction::Right.value() + Direction::Right.value())
                 }
                 _ => (-1, -1),
@@ -766,9 +743,22 @@ impl BBoard {
                 };
                 self.make_unchecked_move(cr_from as u8, cr_to as u8, rook);
             }
+
+            const DISABLE_CASTLING_RIGHTS: CastlingRights = CastlingRights {
+                king: false,
+                queen: false,
+            };
+
+            match m.piece.color {
+                Color::White => self.white_cr = DISABLE_CASTLING_RIGHTS,
+                Color::Black => self.black_cr = DISABLE_CASTLING_RIGHTS,
+            };
         }
 
         if m.piece.class == P::Rook {
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
             match (m.piece.color, m.target) {
                 // white king side castling
                 (Color::White, 63) => self.white_cr.king = false,
@@ -780,6 +770,10 @@ impl BBoard {
         }
 
         if m.captures.is_some() && m.captures.unwrap().class == P::Rook {
+            // if self_clone.is_none() {
+            //     self_clone = Some(self.clone())
+            // }
+
             match (m.captures.unwrap().color, m.target) {
                 // white king side castling
                 (Color::White, 63) => self.white_cr.king = false,
@@ -789,13 +783,26 @@ impl BBoard {
                 _ => (),
             };
         }
+
+        self_clone
+    }
+
+    fn get_castling_rights(&self, color: Color) -> &CastlingRights {
+        match color {
+            Color::White => &self.white_cr,
+            Color::Black => &self.black_cr,
+        }
+    }
+
+    fn push_unchecked_move(&mut self, m: Move) {
+        self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
+        self.update_board_state_from_move(m);
     }
 
     pub fn count_attackers_of_square(&self, bb: u64, color: Color) -> u32 {
-        println!("bb {:64b}", bb);
-        let us_bitmap = self.us_bitmap();
-        let them_bitmap = self.them_bitmap();
-
+        // println!("bb {:64b}", bb);
+        let us_bitmap = self.get_side_bitmap(color);
+        let them_bitmap = self.get_side_bitmap(color.not());
         let empty = !(us_bitmap | them_bitmap);
 
         let op_attacks = pawn_attacks(
@@ -837,19 +844,8 @@ impl BBoard {
     }
 
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
-        let us_bitmap = (match piece.color {
-            Color::White => self.white,
-            Color::Black => self.black,
-        })
-        .iter()
-        .fold(0, |bb, pice_bb| bb | pice_bb);
-
-        let them_bitmap = (match piece.color {
-            Color::White => self.black,
-            Color::Black => self.white,
-        })
-        .iter()
-        .fold(0, |bb, pice_bb| bb | pice_bb);
+        let us_bitmap = self.get_side_bitmap(piece.color);
+        let them_bitmap = self.get_side_bitmap(piece.color.not());
 
         let empty = !(us_bitmap | them_bitmap);
 
@@ -864,6 +860,10 @@ impl BBoard {
 
                 if piece.color == Color::Black {
                     let first_move_rank = RANK_7;
+
+                    // let moves = Direction::Down.shift_once(bb)
+                    //     | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+
 
                     let moves = Direction::Down.shift_once(bb)
                         | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
@@ -892,6 +892,8 @@ impl BBoard {
                 // let emtpy_and_not_under_attack = !self.attack_map_of(piece.color.not());
                 // let emtpy_and_not_under_attack = self.attack_map_of(piece.color.not());
 
+                // return emtpy_and_not_under_attack;
+                return (king_attacks(bb, empty));
                 (king_attacks(bb, emtpy_and_not_under_attack)
                     | king_king_castle(bb, emtpy_and_not_under_attack, cr)
                     | king_queen_castle(bb, emtpy_and_not_under_attack, cr))

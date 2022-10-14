@@ -42,8 +42,8 @@ fn main() {
     // bboard.register_unchecked_move("d1", "d8", Piece::new(P::Queen, Color::White));
     // bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
 
-    let W_PAWN = &Piece::new(P::Pawn, Color::White);
-    let B_QUEEN = &Piece::new(P::Queen, Color::Black);
+    // let W_PAWN = &Piece::new(P::Pawn, Color::White);
+    // let B_QUEEN = &Piece::new(P::Queen, Color::Black);
     // bboard.preview_moves_of("a2", W_PAWN);
     // bboard._move("b2", "b4", P::Pawn);
     // bboard._move("a7", "a5", P::Pawn);
@@ -56,47 +56,54 @@ fn main() {
     // bboard._capture("c5", "d6", P::Pawn, P::Pawn);
     // bboard.clone().preview_moves_of("h7", P::Pawn);
 
-    // bboard.preview_moves_of("h2", P::Pawn);
-    // bboard.preview_moves_of("d8", B_QUEEN);
-    // bboard.preview_moves_of("g8", &Piece::new(P::Knight, Color::Black));
+    // bboard._move("g1", "f3", P::Knight);
+    // bboard._move("b8", "c6", P::Knight);
 
-    bboard._move("g1", "f3", P::Knight);
-    bboard._move("b8", "c6", P::Knight);
+    // bboard._move("g2", "g3", P::Pawn);
+    // bboard._move("e7", "e6", P::Pawn);
+    // bboard._move("f1", "g2", P::Bishop);
 
-    bboard._move("g2", "g3", P::Pawn);
-    bboard._move("e7", "e6", P::Pawn);
-    bboard._move("f1", "g2", P::Bishop);
+    // // bboard._move("d7", "d5", P::Pawn);
+    // // bboard._move("g8", "f6", P::Knight);
 
-    bboard._move("d7", "d5", P::Pawn);
-    bboard.clone().preview_moves_of("e1", P::King);
+    // bboard._move("d1", "d4", P::Queen);
+    // bboard._move("h7", "h6", P::Pawn);
 
-    bboard._move("e5", "e6", P::Pawn);
-    bboard._move("b7", "b6", P::Pawn);
-    bboard.clone().preview_moves_of("e1", P::King);
-    bboard._move("d2", "d4", P::Pawn);
-    bboard._move("c8", "a6", P::Bishop);
-    bboard.clone().preview_moves_of("e1", P::King);
+    // bboard._move("c1", "a3", P::Bishop);
+    // bboard._move("h6", "h5", P::Pawn);
+    // bboard._move("b1", "c3", P::Knight);
+    // bboard._move("h5", "h4", P::Pawn);
+    // bboard._move("h2", "h4", P::Pawn);
+    // bboard._move("g8", "f6", P::Knight);
+    // bboard.pprint();
+    bboard.clone().preview_moves_of("a1", P::Rook, Color::White);
+    bboard.pprint();
+
+    // bboard._move("e5", "e6", P::Pawn);
+    // bboard._move("b7", "b6", P::Pawn);
+    // bboard.clone().preview_moves_of("e1", P::King);
+    // bboard._move("d2", "d4", P::Pawn);
+    // bboard._move("c8", "a6", P::Bishop);
+    // bboard.clone().preview_moves_of("e1", P::King);
     // bboard.count_attackers_of_square("e4");
     // bboard._move("f8", "e7", P::Bishop);
-    bboard.clone().preview_attackers();
-    bboard.clone().preview_moves_of("e1", P::King);
+    // bboard.clone().preview_attackers();
+    // bboard.clone().preview_moves_of("e1", P::King);
 
     // bboard.clone().preview_moves_of("a6", P::Bishop);
-    // bboard.preview_attackers_of("e4");
-
     let ply = 3;
 
-    // let m = bboard.count_ply_moves(ply);
-    // println!("ply({ply}) -> {m}");
+    let m = bboard.count_ply_moves(ply);
+    println!("ply({ply}) -> {m}");
     // bboard.pprint();
 
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
-    // println!("sq h1 {}", BBoard::parse_sq("h1"));
-    loop {
-        thread::sleep(time::Duration::from_millis(1000));
-        bboard.make_random_move();
-        bboard.pprint();
-    }
+    // // println!("sq h1 {}", BBoard::parse_sq("h1"));
+    // loop {
+    //     thread::sleep(time::Duration::from_millis(100));
+    //     bboard.make_random_move();
+    //     bboard.pprint();
+    // }
 
 
     // bboard.pprint();
@@ -169,7 +176,7 @@ fn main() {
 
     // let a = board.get_square(&"E2".to_string());
     // dbg!(a);
-    let ply = 5;
+    let ply = 2;
     let count = board.count_ply_moves(ply);
     println!("count_ply_moves({ply}) -> {count}");
 }
