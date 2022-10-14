@@ -68,9 +68,19 @@ fn main() {
     bboard._move("f1", "g2", P::Bishop);
 
     bboard._move("d7", "d5", P::Pawn);
+    // bboard.clone().preview_moves_of("e1", P::King);
+
+    bboard._move("e5", "e6", P::Pawn);
+    bboard._move("b7", "b6", P::Pawn);
+    bboard.clone().preview_moves_of("e1", P::King);
+    bboard._move("d2", "d4", P::Pawn);
+    bboard._move("c8", "a6", P::Bishop);
     bboard.clone().preview_moves_of("e1", P::King);
     // bboard.count_attackers_of_square("e4");
-    bboard.preview_attackers();
+    // bboard._move("f8", "e7", P::Bishop);
+    bboard.clone().preview_attackers();
+
+    // bboard.clone().preview_moves_of("a6", P::Bishop);
     // bboard.preview_attackers_of("e4");
 
     // let ply = 3;

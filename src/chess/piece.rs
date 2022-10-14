@@ -135,6 +135,7 @@ impl Direction {
             Direction::Left => 0x7f7f7f7f7f7f7f7f,
             Direction::DownLeft => 0x7f7f7f7f7f7f7f00,
             Direction::Down => 0xffffffffffffff00,
+
         }
     }
 
@@ -171,6 +172,15 @@ pub enum Direction {
 pub enum Color {
     Black,
     White,
+}
+
+impl Color {
+    pub fn not(&self) -> Color {
+        match self {
+            Color::Black => Color::White,
+            Color::White => Color::Black,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

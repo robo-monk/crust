@@ -113,34 +113,25 @@ fn knight_attacks(knights: u64) -> u64 {
     (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
 }
 
-fn king_attacks(bb: u64, empty: u64, cr: &CastlingRights) -> u64 {
-    let mut cr_targets: u64 = 0;
-
-    if cr.king {
-        cr_targets |= (Direction::Right.shift_once((Direction::Right.shift_once(bb)) & empty))
-            & (Direction::Right.shift_twice(bb) & empty);
-        // println!(">>>>>> CR KING {:64b}", cr_targets);
-    }
-
-    if cr.queen {
-        cr_targets |= (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty))
-            & (Direction::Left.shift_twice(bb) & empty);
-        // println!(">>>>>> CR QUEEN {:64b}", cr_targets);
-    }
-
-    println!(">>>>>> {:64b}", cr_targets);
-
+fn king_attacks(bb: u64, empty: u64) -> u64 {
     let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
     let _bb = bb | attacks;
-    cr_targets | attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
+    attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)
 }
 
-fn king_queen_castle(bb: u64) -> u64 {
-    todo!()
+fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
+    if cr.queen {
+        (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty_and_not_under_attack))
+            & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
+    } else {0}
 }
 
-fn king_king_castle(bb: u64) -> u64 {
-    todo!()
+fn king_king_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
+    if cr.king {
+        (Direction::Right
+            .shift_once((Direction::Right.shift_once(bb)) & empty_and_not_under_attack))
+            & (Direction::Right.shift_twice(bb) & empty_and_not_under_attack)
+    } else { 0 }
 }
 
 fn pawn_attacks(bb: u64, color: Color) -> u64 {
@@ -393,17 +384,61 @@ impl BBoard {
         self.pprint();
     }
 
+    pub fn get_sqs_attackers(&self, sqs: u64, them_color: Color) -> u64 {
+        let us_bitmap = self.get_side_bb(them_color.not());
+        // let them_bitmap = self.get_side_bb();
+        // let them_bitmap = us;
+        // let them_bitmap = self.them_bitmap();
+        // let empty = !(us_bitmap | them_bitmap);
+
+        // bishop_attacks(sqs, )
+        todo!()
+
+    }
+
     pub fn attack_map_of(&self, color: Color) -> u64 {
-        let us_bitmap = self.get_side_bb(color);
-        let them_bitmap = self.them_bitmap();
+        let us_bitmap = self.get_side_bb(color.not());
+        let them_bitmap = self.get_side_bb(color);
+        // let us_bitmap = 0;
+        // let them_bitmap = them_bitmap;
+
+        // let them_bitmap = self.them_bitmap();
         let empty = !(us_bitmap | them_bitmap);
 
-        let op_attacks =  pawn_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Pawn}), color) |
-            bishop_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Bishop}), empty) |
-            rook_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Rook}), empty) |
-            queen_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Queen}), empty) |
-            king_attacks(self.get_bboard_of_piece(&Piece { color, class: P::King}), empty, &CastlingRights { queen: false, king: false }) |
-            knight_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Knight}));
+        let op_attacks = pawn_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Pawn,
+            }),
+            color,
+        ) | bishop_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Bishop,
+            }),
+            empty,
+        ) | rook_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Rook,
+            }),
+            empty,
+        ) | queen_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Queen,
+            }),
+            empty,
+        ) | king_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::King,
+            }),
+            empty,
+        ) | knight_attacks(self.get_bboard_of_piece(&Piece {
+            color,
+            class: P::Knight,
+        }));
 
         op_attacks & !them_bitmap
     }
@@ -593,7 +628,7 @@ impl BBoard {
         }
     }
     pub fn get_side_bb(&self, side: Color) -> u64 {
-        (match self.turn {
+        (match side {
             Color::White => self.black,
             Color::Black => self.white,
         })
@@ -756,12 +791,40 @@ impl BBoard {
 
         let empty = !(us_bitmap | them_bitmap);
 
-        let op_attacks =  pawn_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Pawn}), color) |
-            bishop_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Bishop}), empty) |
-            rook_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Rook}), empty) |
-            queen_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Queen}), empty) |
-            king_attacks(self.get_bboard_of_piece(&Piece { color, class: P::King}), empty, &CastlingRights { queen: false, king: false }) |
-            knight_attacks(self.get_bboard_of_piece(&Piece { color, class: P::Knight}));
+        let op_attacks = pawn_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Pawn,
+            }),
+            color,
+        ) | bishop_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Bishop,
+            }),
+            empty,
+        ) | rook_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Rook,
+            }),
+            empty,
+        ) | queen_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::Queen,
+            }),
+            empty,
+        ) | king_attacks(
+            self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::King,
+            }),
+            empty,
+        ) | knight_attacks(self.get_bboard_of_piece(&Piece {
+            color,
+            class: P::Knight,
+        }));
 
         (bb & op_attacks).count_ones()
     }
@@ -818,7 +881,14 @@ impl BBoard {
                     Color::Black => &self.black_cr,
                 };
 
-                king_attacks(bb, empty, cr) & !us_bitmap
+                let emtpy_and_not_under_attack = empty & !self.attack_map_of(piece.color.not());
+                // let emtpy_and_not_under_attack = !self.attack_map_of(piece.color.not());
+                // let emtpy_and_not_under_attack = self.attack_map_of(piece.color.not());
+
+                (king_attacks(bb, emtpy_and_not_under_attack)
+                    | king_king_castle(bb, emtpy_and_not_under_attack, cr)
+                    | king_queen_castle(bb, emtpy_and_not_under_attack, cr))
+                    & !us_bitmap
             }
             P::Rook => rook_attacks(bb, empty) & !us_bitmap,
             P::Bishop => bishop_attacks(bb, empty) & !us_bitmap,
