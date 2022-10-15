@@ -11,12 +11,14 @@ use chess::board::Board;
 fn main() {
     // let board = Board::new();
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // let fen = String::from("r1bqkbnr/ppp2ppp/2n1p3/8/2pP4/5N2/PP2PPPP/RNBQKB1R b KQkq - 0 1");
     let board = Board::from_fen(&fen);
     let mut bboard = BBoard::new();
 
     bboard.white_cr = board.white_cr;
     bboard.black_cr = board.black_cr;
     bboard.en_passant_target = board.en_passant;
+    bboard.turn = board.turn;
 
     for (i, sq) in board.squares.iter().enumerate() {
         if sq.is_none() { continue }
@@ -28,82 +30,20 @@ fn main() {
 
     bboard.pprint();
 
-    // bboard.make_unchecked_move()
-    // bboard.register_unchecked_move("d2", "d3", Piece::new(P::Pawn, Color::White));
-    // bboard.register_unchecked_move("e7", "e4", Piece::new(P::Pawn, Color::Black));
-    // bboard.register_unchecked_move("g7", "g5", Piece::new(P::Pawn, Color::Black));
-    // bboard.register_unchecked_move("h7", "h6", Piece::new(P::Pawn, Color::Black));
-
-    // bboard.register_unchecked_move("d8", "b4", Piece::new(P::Queen, Color::Black));
-    // bboard.register_unchecked_move("d8", "h3", Piece::new(P::Queen, Color::Black));
-
-    // bboard.register_unchecked_move("d1", "d5", Piece::new(P::Queen, Color::White));
-    // bboard.register_unchecked_move("d1", "d2", Piece::new(P::Queen, Color::White));
-    // bboard.register_unchecked_move("d1", "d8", Piece::new(P::Queen, Color::White));
-    // bboard.register_unchecked_move("a2", "a3", Piece::new(P::Pawn, Color::White));
-
-    // let W_PAWN = &Piece::new(P::Pawn, Color::White);
-    // let B_QUEEN = &Piece::new(P::Queen, Color::Black);
-    // bboard.preview_moves_of("a2", W_PAWN);
-    // bboard._move("b2", "b4", P::Pawn);
-    // bboard._move("a7", "a5", P::Pawn);
-    // bboard._move("c2", "c4", P::Pawn);
-    // bboard._move("a7", "a5", P::Pawn);
-    // bboard._move("c4", "c5", P::Pawn);
-    // bboard._move("d7", "d5", P::Pawn);
-
-    // bboard.clone().preview_moves_of("c5", P::Pawn);
-    // bboard._capture("c5", "d6", P::Pawn, P::Pawn);
-    // bboard.clone().preview_moves_of("h7", P::Pawn);
-
-    // bboard._move("g1", "f3", P::Knight);
-    // bboard._move("b8", "c6", P::Knight);
-
-    // bboard._move("g2", "g3", P::Pawn);
-    // bboard._move("e7", "e6", P::Pawn);
-    // bboard._move("f1", "g2", P::Bishop);
-
-    // // bboard._move("d7", "d5", P::Pawn);
-    // // bboard._move("g8", "f6", P::Knight);
-
-    // bboard._move("d1", "d4", P::Queen);
-    // bboard._move("h7", "h6", P::Pawn);
-
-    // bboard._move("c1", "a3", P::Bishop);
-    // bboard._move("h6", "h5", P::Pawn);
-    // bboard._move("b1", "c3", P::Knight);
-    // bboard._move("h5", "h4", P::Pawn);
-    // bboard._move("h2", "h4", P::Pawn);
-    // bboard._move("g8", "f6", P::Knight);
-    // bboard.pprint();
-    // bboard.clone().preview_moves_of("a1", P::Rook, Color::White);
-    // bboard.pprint();
-
-    // bboard._move("e5", "e6", P::Pawn);
-    // bboard._move("b7", "b6", P::Pawn);
-    // bboard.clone().preview_moves_of("e1", P::King);
-    // bboard._move("d2", "d4", P::Pawn);
-    // bboard._move("c8", "a6", P::Bishop);
-    // bboard.clone().preview_moves_of("e1", P::King);
-    // bboard.count_attackers_of_square("e4");
-    // bboard._move("f8", "e7", P::Bishop);
-    // bboard.clone().preview_attackers();
-    // bboard.clone().preview_moves_of("e1", P::King);
-
-    // bboard.clone().preview_moves_of("a6", P::Bishop);
-    let ply = 1;
+    let ply = 3;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
 
-    // bboard.pprint();
+    bboard.pprint();
 
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
     // println!("sq h1 {}", BBoard::parse_sq("h1"));
 
     loop {
         thread::sleep(time::Duration::from_millis(100));
-        bboard.make_random_move();
+        // bboard.make_random_move();
+        bboard.make_good_move(3);
         bboard.pprint();
     }
 

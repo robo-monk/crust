@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::piece::{Color, Direction, Piece, P};
+use super::bboard::BBoard;
 
 #[derive(Debug, Clone)]
 pub struct Move {
