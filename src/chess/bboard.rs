@@ -371,9 +371,10 @@ impl BBoard {
 
         board.print();
         let available_moves = self.count_available_moves();
-        println!("> {:?} to play", self.turn);
-        println!("> EVAL(2): {:?}", self.evaluate(2));
-        println!("> {available_moves} available moves...");
+        println!("\n-------------------");
+        println!("  {:?} to play", self.turn);
+        println!("  eval(2): {:?}", self.evaluate(2));
+        println!("  {available_moves} available moves...");
     }
 
     pub fn preview(&mut self, moves: u64) {
@@ -617,17 +618,20 @@ impl BBoard {
                 loop_through_indeces(captures, |target| {
                     // println!("capture {target}");
                     for i in 0..6 {
-                        let piece = Piece::new(PIECES[i], side.not());
+                        let captured_piece = Piece::new(PIECES[i], side.not());
+                        if captured_piece.color.eq(&piece.color) {
+                            panic!("yo")
+                        }
                         let piece_bb = bba[piece_i];
 
                         // if (piece_bb & index_mask(target)) != 0 {
                         if (piece_bb & index_mask(target)) != 0 {
-                            let captured_piece = piece;
+                            // let captured_piece = piece;
                             // let captured_piece_type = PIECES[i as usize];
 
                             // let captured_piece = Piece {
                             //     class: captured_piece_type,
-                            //     color: piece.color,
+                            //     color: captured_piece.color,
                             // };
 
                             let m = Move {

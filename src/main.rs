@@ -43,7 +43,7 @@ fn main() {
     loop {
         thread::sleep(time::Duration::from_millis(100));
         // bboard.make_random_move();
-        bboard.make_good_move(3);
+        bboard.make_good_move(5);
         bboard.pprint();
     }
 
