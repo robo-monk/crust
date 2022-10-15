@@ -3,7 +3,7 @@ use super::piece::{Color, Direction, Piece, P};
 use rand::Rng; // 0.8.5
 
 #[derive(Clone, Copy, Debug)]
-struct Move {
+pub struct Move {
     from: u32,
     target: u32,
     piece: Piece,
@@ -61,6 +61,9 @@ fn rotate(i: u64, v: i32) -> u64 {
     } else {
         i.rotate_left(v as u32)
     }
+}
+pub fn index_mask(i: u32) -> u64 {
+    1 << i
 }
 
 fn occluded_fill(mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
@@ -121,7 +124,6 @@ fn king_attacks(bb: u64, empty: u64) -> u64 {
 
 fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
     if cr.queen {
-        println!("CASL@WQQQQQ");
         (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty_and_not_under_attack))
             & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
     } else {
@@ -344,6 +346,7 @@ impl BBoard {
         board.print();
         let available_moves = self.count_available_moves();
         println!("> {:?} to play", self.turn);
+        println!("> EVAL: {:?}", self.evaluate(1));
         println!("> {available_moves} available moves...");
     }
 
@@ -452,74 +455,24 @@ impl BBoard {
         // get_available_moves_at_index
         // for (i, class) in PIECES.iter().enumerate() {
 
-        let mut move_count = 0;
         let mut _moves: Vec<Move> = vec![];
-        let mut _captures: Vec<Move> = vec![];
+        self.loop_through_moves_and_captures(self.turn, |m| {
+            _moves.push(m);
+        });
 
-        for piece_i in 0..6 {
-            let piece = Piece::new(PIECES[piece_i], self.turn);
-            let piece_bb = bb[piece_i];
-            // println!("| START [{:?}] > {i}", piece);
-            // println!("| {:64b}", piece_bb);
-            //  self.get_available_moves_at_index()
-            // let i_mask = 1 << i;
-            // fn loop_through_indeces(bb: u64, reducer: f)
-            loop_through_indeces(piece_bb, |from| {
-                // println!("|> - {:?} > {i}", piece);
-                let moves = self.get_available_moves_at_index(from, &piece);
-                let captures = moves & them;
+        let move_i = rand::thread_rng().gen_range(0.._moves.len());
+        let rmove = _moves.get(move_i).unwrap();
 
-                loop_through_indeces(moves & !captures, |target| {
-                    _moves.push(Move {
-                        from,
-                        target,
-                        piece,
-                        captures: None,
-                    });
-                });
+        // if rmove.piece.class == P::King && rmove.from.abs_diff(rmove.target) > 8 {
+        //     println!("CASTLE")
+        // }
 
-                loop_through_indeces(captures, |target| {
-                    for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
-                        if i == 6 {
-                            break;
-                        }; //gross, skip preview looping
-
-                        if (piece_bb & (1 << target)) > 0 {
-                            // println!("captures a {:?}", PIECES[i as usize]);
-                            let captured_piece_type = PIECES[i as usize];
-
-                            let captures = Piece {
-                                class: captured_piece_type,
-                                color: self.not_turn(),
-                            };
-
-                            _captures.push(Move {
-                                from,
-                                target,
-                                piece,
-                                captures: Some(captures),
-                            });
-                            break;
-                        }
-                    }
-                });
-            });
-        }
-
-        let possible_actions = vec![_moves, _captures].concat();
-        // let possible_actions = vec![_captures].concat();
-
-        // / Generate random number in the range [0, 99]
-        let action_i = rand::thread_rng().gen_range(0..possible_actions.len());
-        let rmove = possible_actions.get(action_i).unwrap();
-        if rmove.piece.class == P::King && rmove.from.abs_diff(rmove.target) > 8 {
-            println!("CASTLE")
-        }
         println!(
-            "AGENT > from {} possible actions => chose #{action_i} > {:?}",
-            possible_actions.len(),
+            "AGENT > from {} possible actions => chose #{move_i} > {:?}",
+            _moves.len(),
             &rmove
         );
+
         self.push_unchecked_move(*rmove);
         // self.make_unchecked_move(target as u8, from as u8, piece);
         // println!("{}", num);
@@ -529,71 +482,113 @@ impl BBoard {
     // pub push_unch
 
     // self.make_unchecked_move(target as u8, from as u8, piece);
-    pub fn count_ply_moves(&mut self, depth: u32) -> u32 {
+    pub fn _count_piece_score(&self, bba: [u64; 7]) -> u32 {
+        let mut score = 0;
+
+        for piece_i in 0..6 {
+            let piece = Piece::new(PIECES[piece_i], self.turn);
+            let piece_bb = bba[piece_i];
+
+            let mult = match piece.class {
+                P::Pawn => 1,
+                P::Knight | P::Bishop => 3,
+                P::Rook => 5,
+                P::Queen => 9,
+                P::King => 9999,
+                P::Preview => 0,
+            };
+
+            score += piece_bb.count_ones() * mult;
+        }
+
+        score
+    }
+
+    pub fn evaluate(&mut self, depth: u32) -> i32 {
         if depth <= 0 {
             return 1;
         }
 
-        let bb = self.get_turns_bb_array();
-        let them = self.them_bitmap();
-        let mut move_count = 0;
+        let white_score = self._count_piece_score(self.white) as i32;
+        let black_score = self._count_piece_score(self.black) as i32;
+
+        white_score - black_score
+    }
+
+    pub fn loop_through_moves_and_captures<F>(&self, side: Color, mut reducer: F)
+    where
+        F: FnMut(Move) -> (),
+    {
+        // let bb = self.get_turns_bb_array();
+        // let bb = self.get_turns_bb_array();
+        // let them = self.them_bitmap();
+        let bba = self.get_side_bba(side);
+        let them: u64 = self.get_side_bitmap(side.not());
+
         for piece_i in 0..6 {
-            let piece = Piece::new(PIECES[piece_i], self.turn);
-            let piece_bb = bb[piece_i];
+
+            let piece = Piece::new(PIECES[piece_i], side);
+            let piece_bb = bba[piece_i];
+
             loop_through_indeces(piece_bb, |from| {
-                let moves = self.get_available_moves_at_index(from, &piece);
+                let moves = self.get_available_moves_at_index(from, &piece); // turn agnostic
                 let captures = moves & them;
 
                 loop_through_indeces(moves & !captures, |target| {
-                    let mut c = self.clone();
-
-                    c.push_unchecked_move(Move {
+                    let m = Move {
                         from,
                         target,
                         piece,
                         captures: None,
-                    });
+                    };
 
-                    move_count += c.count_ply_moves(depth - 1);
+                    reducer(m);
                 });
 
                 loop_through_indeces(captures, |target| {
                     // println!("capture {target}");
                     for i in 0..6 {
-                        let piece = Piece::new(PIECES[i], self.turn);
-                        let piece_bb = bb[piece_i];
-                    // for (i, piece_bb) in self.get_them_bb_array().iter().enumerate() {
-                        // println!("{:64b}", (*piece_bb & (1 << target)));
-                        // println!("{:64b}", (piece_bb));
-                        // println!("{:64b}", (1 << target));
-                        if (piece_bb & (1 << target)) > 0 {
-                            let captured_piece_type = PIECES[i as usize];
-                            let captured_piece = Piece {
-                                class: captured_piece_type,
-                                color: self.not_turn(),
-                            };
+                        let piece = Piece::new(PIECES[i], side.not());
+                        let piece_bb = bba[piece_i];
 
-                            let mut c = self.clone();
-                            c.push_unchecked_move(Move {
+                        // if (piece_bb & index_mask(target)) != 0 {
+                        if (piece_bb & index_mask(target)) != 0 {
+                            let captured_piece = piece;
+                            // let captured_piece_type = PIECES[i as usize];
+
+                            // let captured_piece = Piece {
+                            //     class: captured_piece_type,
+                            //     color: piece.color,
+                            // };
+
+                            let m = Move {
                                 from,
                                 target,
                                 piece,
                                 captures: Some(captured_piece),
-                            });
+                            };
 
-                            move_count += c.count_ply_moves(depth - 1);
-                            // self.make_unchecked_move(target as u8, from as u8, piece);
-                            // self.place(captured_piece, target as u8);
+                            reducer(m);
                             break;
                         }
                     }
-                    // println!("capture");
-                    // self.make_unchecked_move(i as u8, ii as u8, piece);
-                    // self.clone().mutate_bboard_of_piece()
                 });
-
             });
         }
+    }
+
+    pub fn count_ply_moves(&mut self, depth: u32) -> u32 {
+        if depth <= 0 {
+            return 1;
+        }
+
+        let mut move_count = 0;
+
+        self.loop_through_moves_and_captures(self.turn, |m| {
+            let mut c = self.clone();
+            c.push_unchecked_move(m);
+            move_count += c.count_ply_moves(depth -1);
+        });
 
         move_count
     }
@@ -620,18 +615,19 @@ impl BBoard {
         self.get_side_bitmap(self.not_turn())
     }
 
-    pub fn get_them_bb_array(&self) -> [u64; 7] {
-        match self.turn {
-            Color::White => self.black,
-            Color::Black => self.white,
-        }
-    }
-
-    pub fn get_turns_bb_array(&self) -> [u64; 7] {
-        match self.turn {
+    pub fn get_side_bba(&self, side: Color) -> [u64; 7] {
+        match side {
             Color::Black => self.black,
             Color::White => self.white,
         }
+    }
+
+    pub fn get_them_bb_array(&self) -> [u64; 7] {
+        self.get_side_bba(self.turn.not())
+    }
+
+    pub fn get_turns_bb_array(&self) -> [u64; 7] {
+        self.get_side_bba(self.turn)
     }
 
     pub fn count_available_moves(&self) -> u32 {
@@ -641,10 +637,6 @@ impl BBoard {
 
     pub fn count_available_moves_at_index(&self, i: u32, piece: &Piece) -> u32 {
         self.get_available_moves_at_index(i, piece).count_ones()
-    }
-
-    pub fn index_to_mask(i: u32) -> u64 {
-        1 << i
     }
 
     pub fn get_available_moves_at_index(&self, i: u32, piece: &Piece) -> u64 {
@@ -843,17 +835,33 @@ impl BBoard {
         (bb & op_attacks).count_ones()
     }
 
+    pub fn is_in_check(&self, empty: u64, color: Color) -> bool {
+        let emtpy_and_not_under_attack = empty & !self.attack_map_of(color.not());
+        (emtpy_and_not_under_attack
+            & self.get_bboard_of_piece(&Piece {
+                color,
+                class: P::King,
+            }))
+            == 0
+    }
+
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
         let us_bitmap = self.get_side_bitmap(piece.color);
         let them_bitmap = self.get_side_bitmap(piece.color.not());
 
         let empty = !(us_bitmap | them_bitmap);
 
+        // if self.is_in_check(empty, piece.color) {
+        //     // println!("IM IN CHECK");
+        //     // self.clone().pprint();
+        // }
+
         match piece.class {
             P::Pawn => {
                 let mut en_passant_bitmap = 0;
                 if self.turn == piece.color {
                     en_passant_bitmap = &(1 as u64) << self.en_passant_target.unwrap_or(0);
+                    // en_passant_bitmap = 0;
                 }
 
                 let attacks = pawn_attacks(bb, piece.color) & (them_bitmap | en_passant_bitmap); // moves forward
@@ -863,7 +871,6 @@ impl BBoard {
 
                     // let moves = Direction::Down.shift_once(bb)
                     //     | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
-
 
                     let moves = Direction::Down.shift_once(bb)
                         | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
@@ -893,7 +900,7 @@ impl BBoard {
                 // let emtpy_and_not_under_attack = self.attack_map_of(piece.color.not());
 
                 // return emtpy_and_not_under_attack;
-                return (king_attacks(bb, empty));
+                // return (king_attacks(bb, empty));
                 (king_attacks(bb, emtpy_and_not_under_attack)
                     | king_king_castle(bb, emtpy_and_not_under_attack, cr)
                     | king_queen_castle(bb, emtpy_and_not_under_attack, cr))

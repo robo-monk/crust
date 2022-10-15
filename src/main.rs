@@ -76,8 +76,8 @@ fn main() {
     // bboard._move("h2", "h4", P::Pawn);
     // bboard._move("g8", "f6", P::Knight);
     // bboard.pprint();
-    bboard.clone().preview_moves_of("a1", P::Rook, Color::White);
-    bboard.pprint();
+    // bboard.clone().preview_moves_of("a1", P::Rook, Color::White);
+    // bboard.pprint();
 
     // bboard._move("e5", "e6", P::Pawn);
     // bboard._move("b7", "b6", P::Pawn);
@@ -91,19 +91,21 @@ fn main() {
     // bboard.clone().preview_moves_of("e1", P::King);
 
     // bboard.clone().preview_moves_of("a6", P::Bishop);
-    let ply = 3;
+    let ply = 1;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
+
     // bboard.pprint();
 
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
-    // // println!("sq h1 {}", BBoard::parse_sq("h1"));
-    // loop {
-    //     thread::sleep(time::Duration::from_millis(100));
-    //     bboard.make_random_move();
-    //     bboard.pprint();
-    // }
+    // println!("sq h1 {}", BBoard::parse_sq("h1"));
+
+    loop {
+        thread::sleep(time::Duration::from_millis(100));
+        bboard.make_random_move();
+        bboard.pprint();
+    }
 
 
     // bboard.pprint();
