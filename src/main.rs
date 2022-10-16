@@ -1,17 +1,16 @@
 mod chess;
+use chess::bboard::{BBoard, Move};
 use std::{thread, time};
-use chess::bboard::BBoard;
 // use bitvec::prelude::*;
 
-
 // use chess::{Board};
-use chess::piece::{Piece, P, Color};
 use chess::board::Board;
+use chess::piece::{Color, Piece, P};
 
 fn main() {
     // let board = Board::new();
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // let fen = String::from("r1bqkbnr/ppp2ppp/2n1p3/8/2pP4/5N2/PP2PPPP/RNBQKB1R b KQkq - 0 1");
+    // let fen = String::from("r1bqkbnr/1pp2p1p/p1n5/1P1P4/P1p1p1p1/5N2/4PPPP/RNBQKB1R b KQkq - 0 1");
     let board = Board::from_fen(&fen);
     let mut bboard = BBoard::new();
 
@@ -21,7 +20,9 @@ fn main() {
     bboard.turn = board.turn;
 
     for (i, sq) in board.squares.iter().enumerate() {
-        if sq.is_none() { continue }
+        if sq.is_none() {
+            continue;
+        }
         let piece = sq.unwrap();
         dbg!(i, piece);
 
@@ -30,23 +31,67 @@ fn main() {
 
     bboard.pprint();
 
-    let ply = 3;
+    let ply = 5;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
 
+    // bboard.preview_moves(&Piece { class: P::Pawn, color: Color::Black });
+    println!("starting agent at (depth: {ply})");
+    bboard.make_good_move(ply);
     bboard.pprint();
+
 
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
     // println!("sq h1 {}", BBoard::parse_sq("h1"));
 
-    loop {
-        thread::sleep(time::Duration::from_millis(100));
-        // bboard.make_random_move();
-        bboard.make_good_move(5);
-        bboard.pprint();
-    }
+    // loop {
+    //     thread::sleep(time::Duration::from_millis(500));
+    //     // bboard.make_random_move();
+    //     // bboard.make_good_move(ply);
+    //     bboard.make_good_move(4);
+    //     bboard.pprint();
+    // }
 
+    loop {
+        bboard.make_good_move(3);
+        bboard.pprint();
+
+        let mut line = String::new();
+        println!("Enter your move (ex. e2 e4, e4xd5): ");
+        std::io::stdin().read_line(&mut line).unwrap();
+
+        if line.contains("x") {
+            let contents: Vec<&str> = line.split("x").collect();
+            let from = BBoard::parse_sq(contents.get(0).unwrap()) as u32;
+            let target = BBoard::parse_sq(contents.get(1).unwrap()) as u32;
+            let piece = bboard.find_piece_at_index(from, bboard.turn);
+            let captures = bboard.find_piece_at_index(target, bboard.turn.not());
+
+            bboard.push_unchecked_move(Move {
+                target,
+                from,
+                piece,
+                captures: Some(captures),
+            });
+        } else {
+            let contents: Vec<&str> = line.split(" ").collect();
+            let from = BBoard::parse_sq(contents.get(0).unwrap()) as u32;
+            let target = BBoard::parse_sq(contents.get(1).unwrap()) as u32;
+            let piece = bboard.find_piece_at_index(from, bboard.turn);
+
+            bboard.push_unchecked_move(Move {
+                target,
+                from,
+                piece,
+                captures: None,
+            });
+        }
+
+        // let from_sq = line.split("")
+        // println!("Hello , {}", line);
+        // println!("no of bytes read , {}", b1);
+    }
 
     // bboard.pprint();
     // bboard.get_available_captures(Piece::new(P::Pawn, Color::White));
@@ -143,7 +188,10 @@ fn rules_are_right() {
 
     for (ply, expected_count) in plys_count.iter() {
         let count = board.count_ply_moves(*ply);
-        assert_eq!(count, *expected_count as usize, "ply {ply} should be {expected_count} but was {count}");
+        assert_eq!(
+            count, *expected_count as usize,
+            "ply {ply} should be {expected_count} but was {count}"
+        );
     }
 }
 // }

@@ -5,10 +5,10 @@ use std::fmt::Debug; // 0.8.5
 
 #[derive(Clone)]
 pub struct Move {
-    from: u32,
-    target: u32,
-    piece: Piece,
-    captures: Option<Piece>,
+    pub from: u32,
+    pub target: u32,
+    pub piece: Piece,
+    pub captures: Option<Piece>,
 }
 
 impl Debug for Move {
@@ -83,7 +83,7 @@ fn rotate(i: u64, v: i32) -> u64 {
     }
 }
 pub fn index_mask(i: u32) -> u64 {
-    1 << i
+    (1 as u64) << i
 }
 
 fn occluded_fill(mut gen: u64, mut pro: u64, direction: Direction) -> u64 {
@@ -163,7 +163,7 @@ fn king_king_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRight
 
 fn pawn_attacks(bb: u64, color: Color) -> u64 {
     match color {
-        Color::White => (Direction::DownRight.shift_once(bb) | Direction::DownLeft.shift_once(bb)),
+        Color::White => (Direction::UpRight.shift_once(bb) | Direction::UpLeft.shift_once(bb)),
         Color::Black => (Direction::DownRight.shift_once(bb) | Direction::DownLeft.shift_once(bb)),
     }
 }
@@ -373,7 +373,7 @@ impl BBoard {
         let available_moves = self.count_available_moves();
         println!("\n-------------------");
         println!("  {:?} to play", self.turn);
-        println!("  eval(2): {:?}", self.evaluate(2));
+        println!("  eval(4): {:?}", self.evaluate(4));
         println!("  {available_moves} available moves...");
     }
 
@@ -536,11 +536,6 @@ impl BBoard {
     }
 
     pub fn search_good_move(&self, depth: u32) -> Move {
-        let score_adapter = match self.turn {
-            Color::Black => -1,
-            Color::White => 1,
-        };
-
         let mut best_score: i32 = -999999999;
         let mut best_move = Move {
             from: 0,
@@ -554,9 +549,19 @@ impl BBoard {
 
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
+            c.push_unchecked_move(m.clone());
+            let score_adapter = match self.turn {
+                Color::Black => -1,
+                Color::White => 1,
+            };
+
             let eval = c.evaluate(depth) * score_adapter;
 
-            if best_score < eval {
+            if m.piece.is_pawn() {
+                println!("-> best_score: {best_score} -> eval: {eval} with move {m:?}");
+            }
+            if eval >= best_score {
+                // println!("-> best_score was {best_score} and became eval: {eval} with move {m:?}");
                 best_score = eval;
                 best_move = m;
             }
@@ -565,25 +570,37 @@ impl BBoard {
         best_move
     }
 
-    pub fn evaluate(&mut self, depth: u32) -> i32 {
-        let mut white_score = self.eval_side_score(Color::White) as i32;
-        let mut black_score = self.eval_side_score(Color::Black) as i32;
+    pub fn _evaluate(&self) -> i32 {
+        let white_score = self.eval_side_score(Color::White) as i32;
+        let black_score = self.eval_side_score(Color::Black) as i32;
+        white_score - black_score
+    }
 
+    pub fn evaluate(&self, depth: u32) -> i32 {
+        let mut score = self._evaluate();
         if depth > 1 {
-            self.loop_through_moves_and_captures(Color::White, |m| {
+            self.loop_through_moves_and_captures(self.turn, |m| {
+                // dbg!("white", m.captures.is_some());
+                // if m.captures.is_some() {
+                //     panic!("actually a capture is possible")
+                // }
+
                 let mut c = self.clone();
                 c.push_unchecked_move(m);
-                white_score += c.evaluate(depth - 1);
+                // white_score += c.evaluate(depth - 1);
+                score += c.evaluate(depth - 1);
             });
 
-            self.loop_through_moves_and_captures(Color::Black, |m| {
-                let mut c = self.clone();
-                c.push_unchecked_move(m);
-                black_score += c.evaluate(depth - 1);
-            });
+            // self.loop_through_moves_and_captures(Color::Black, |m| {
+            //     let mut c = self.clone();
+            //     c.push_unchecked_move(m);
+            //     score -= c.evaluate(depth - 1);
+            //     // black_score += c.evaluate(depth - 1);
+            // });
         }
 
-        white_score - black_score
+        // white_score - black_score
+        score
     }
 
     pub fn loop_through_moves_and_captures<F>(&self, side: Color, mut reducer: F)
@@ -593,12 +610,14 @@ impl BBoard {
         // let bb = self.get_turns_bb_array();
         // let bb = self.get_turns_bb_array();
         // let them = self.them_bitmap();
-        let bba = self.get_side_bba(side);
-        let them: u64 = self.get_side_bitmap(side.not());
+        let us_bba = self.get_side_bba(side);
+        let them_bba = self.get_side_bba(side.not());
+        let them = self.get_side_bitmap(side.not());
+        // let them= self.get_side_bitmap(side.not());
 
         for piece_i in 0..6 {
             let piece = Piece::new(PIECES[piece_i], side);
-            let piece_bb = bba[piece_i];
+            let piece_bb = us_bba[piece_i];
 
             loop_through_indeces(piece_bb, |from| {
                 let moves = self.get_available_moves_at_index(from, &piece); // turn agnostic
@@ -619,13 +638,25 @@ impl BBoard {
                     // println!("capture {target}");
                     for i in 0..6 {
                         let captured_piece = Piece::new(PIECES[i], side.not());
-                        if captured_piece.color.eq(&piece.color) {
-                            panic!("yo")
-                        }
-                        let piece_bb = bba[piece_i];
+                        // if captured_piece.color.eq(&piece.color) {
 
-                        // if (piece_bb & index_mask(target)) != 0 {
-                        if (piece_bb & index_mask(target)) != 0 {
+                        // let piece_bb = them_bba[piece_i];
+                        let piece_bb = self.get_bboard_of_piece(&captured_piece);
+
+                        // 0001011
+                        // 0011000
+                        // and
+                        // 0001000
+
+                        if (piece_bb & index_mask(target)) > 0 {
+                        // if ( & index_mask(target)) != 0 {
+                            // if captured_piece.color == piece.color {
+                            //     panic!("yo what the fuck")
+                            // }
+
+                            // if (piece.is_pawn() && !captured_piece.is_pawn()) {
+                            //     // println!("{piece:?} CAPTURE {captured_piece:?}");
+                            // }
                             // let captured_piece = piece;
                             // let captured_piece_type = PIECES[i as usize];
 
@@ -642,7 +673,7 @@ impl BBoard {
                             };
 
                             reducer(m);
-                            break;
+                            // break;
                         }
                     }
                 });
@@ -673,19 +704,9 @@ impl BBoard {
         }
     }
     pub fn get_side_bitmap(&self, side: Color) -> u64 {
-        (match side {
-            Color::White => self.black,
-            Color::Black => self.white,
-        })
-        .iter()
-        .fold(0, |bb, pice_bb| bb | pice_bb)
-    }
-
-    pub fn us_bitmap(&self) -> u64 {
-        self.get_side_bitmap(self.turn)
-    }
-    pub fn them_bitmap(&self) -> u64 {
-        self.get_side_bitmap(self.not_turn())
+        self.get_side_bba(side)
+            .iter()
+            .fold(0, |bb, piece_bb| bb | piece_bb)
     }
 
     pub fn get_side_bba(&self, side: Color) -> [u64; 7] {
@@ -843,7 +864,7 @@ impl BBoard {
         }
     }
 
-    fn push_unchecked_move(&mut self, m: Move) {
+    pub fn push_unchecked_move(&mut self, m: Move) {
         self.make_unchecked_move(m.from as u8, m.target as u8, m.piece);
         self.update_board_state_from_move(m);
     }
@@ -922,6 +943,8 @@ impl BBoard {
                 }
 
                 let attacks = pawn_attacks(bb, piece.color) & (them_bitmap | en_passant_bitmap); // moves forward
+                // return them_bitmap & attacks;
+                // let attacks = pawn_attacks(bb, piece.color) ; // moves forward
 
                 if piece.color == Color::Black {
                     let first_move_rank = RANK_7;
@@ -929,11 +952,12 @@ impl BBoard {
                     // let moves = Direction::Down.shift_once(bb)
                     //     | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
 
-                    let moves = Direction::Down.shift_once(bb)
-                        | (bb & first_move_rank) << 16 & !them_bitmap; // moves forward
+                    let moves = (Direction::Down.shift_once(bb) | (bb & first_move_rank) << 16)
+                        & !them_bitmap;
 
                     let fill = occluded_fill(bb, empty, Direction::Down);
-                    (fill & moves) | attacks
+
+                    ((fill & moves) | attacks) & !us_bitmap
                 } else {
                     let first_move_rank = RANK_2;
 
@@ -941,8 +965,7 @@ impl BBoard {
                         & !them_bitmap; // moves forward
 
                     let fill = occluded_fill(bb, empty, Direction::Up);
-
-                    (fill & moves) | attacks
+                    ((fill & moves) | attacks) & !us_bitmap
                 }
             }
             P::Queen => queen_attacks(bb, empty) & !us_bitmap,
@@ -968,5 +991,24 @@ impl BBoard {
             P::Knight => knight_attacks(bb) & !us_bitmap,
             _ => todo!(),
         }
+    }
+
+    pub fn find_piece_at_index(&self, target: u32, side: Color) -> Piece {
+        let bba = self.get_side_bba(side);
+        // let target = BBoard::parse_sq(sq);
+        for i in 0..6 {
+            let piece = Piece::new(PIECES[i], side);
+            // if captured_piece.color.eq(&piece.color) {
+
+            let piece_bb = bba[i];
+
+            // if (piece_bb & index_mask(target)) != 0 {
+            if (piece_bb & index_mask(target)) != 0 {
+                return piece;
+                // break;
+            }
+        }
+
+        return panic!("no piece there");
     }
 }
