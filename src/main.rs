@@ -31,14 +31,14 @@ fn main() {
 
     bboard.pprint();
 
-    let ply = 5;
+    let ply = 4;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
 
     // bboard.preview_moves(&Piece { class: P::Pawn, color: Color::Black });
     println!("starting agent at (depth: {ply})");
-    bboard.make_good_move(ply);
+    // bboard.make_good_move(ply);
     bboard.pprint();
 
 
@@ -54,8 +54,9 @@ fn main() {
     // }
 
     loop {
-        bboard.make_good_move(3);
+        bboard.make_good_move(ply);
         bboard.pprint();
+
 
         let mut line = String::new();
         println!("Enter your move (ex. e2 e4, e4xd5): ");
@@ -68,7 +69,7 @@ fn main() {
             let piece = bboard.find_piece_at_index(from, bboard.turn);
             let captures = bboard.find_piece_at_index(target, bboard.turn.not());
 
-            bboard.push_unchecked_move(Move {
+            bboard.push_unchecked_move(&Move {
                 target,
                 from,
                 piece,
@@ -80,7 +81,7 @@ fn main() {
             let target = BBoard::parse_sq(contents.get(1).unwrap()) as u32;
             let piece = bboard.find_piece_at_index(from, bboard.turn);
 
-            bboard.push_unchecked_move(Move {
+            bboard.push_unchecked_move(&Move {
                 target,
                 from,
                 piece,
