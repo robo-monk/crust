@@ -31,7 +31,7 @@ fn main() {
 
     bboard.pprint();
 
-    let ply = 5;
+    let ply = 4;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
@@ -45,7 +45,7 @@ fn main() {
     // println!("sq g1 {}", BBoard::parse_sq("a8"));
     // println!("sq h1 {}", BBoard::parse_sq("h1"));
 
-    // loop {
+    // loop
     //     thread::sleep(time::Duration::from_millis(500));
     //     // bboard.make_random_move();
     //     // bboard.make_good_move(ply);
@@ -54,9 +54,9 @@ fn main() {
     // }
 
     loop {
+
         bboard.make_good_move(ply);
         bboard.pprint();
-
 
         let mut line = String::new();
         println!("Enter your move (ex. e2 e4, e4xd5): ");

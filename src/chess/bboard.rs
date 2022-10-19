@@ -136,10 +136,10 @@ fn knight_attacks(knights: u64) -> u64 {
     (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
 }
 
-fn king_attacks(bb: u64, empty: u64) -> u64 {
+fn king_attacks(bb: u64, us: u64) -> u64 {
     let attacks: u64 = Direction::Right.shift_once(bb) | Direction::Left.shift_once(bb);
     let _bb = bb | attacks;
-    (attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)) & empty
+    (attacks | Direction::Down.shift_once(_bb) | Direction::Up.shift_once(_bb)) & !us
 }
 
 fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
@@ -443,7 +443,7 @@ impl BBoard {
                 color,
                 class: P::King,
             }),
-            empty,
+            us_bitmap,
         ) | knight_attacks(self.get_bboard_of_piece(&Piece {
             color,
             class: P::Knight,
