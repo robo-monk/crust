@@ -31,7 +31,7 @@ fn main() {
 
     bboard.pprint();
 
-    let ply = 4;
+    let ply = 5;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");

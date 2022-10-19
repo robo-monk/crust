@@ -572,7 +572,7 @@ impl BBoard {
                 P::Knight | P::Bishop => 3,
                 P::Rook => 5,
                 P::Queen => 9,
-                P::King => 9999,
+                P::King => 10,
                 P::Preview => 0,
             };
 
@@ -585,6 +585,7 @@ impl BBoard {
 
         // let mut best_score: i32 = -999999999;
         let mut best_score = -f32::INFINITY as i32;
+        let mut best_score = f32::INFINITY as i32;
 
         let mut best_move = Move {
             from: 0,
@@ -597,12 +598,14 @@ impl BBoard {
         };
 
 
+        let score = self.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
+        println!(">> score of alpha beta max is {score}", );
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
             c.push_unchecked_move(&m);
 
             let score = c.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
-            if score >= best_score {
+            if score <= best_score {
                 best_score = score;
                 best_move = m;
             }
