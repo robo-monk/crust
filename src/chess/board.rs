@@ -1,16 +1,17 @@
 use std::collections::HashMap;
 
 use super::piece::{Color, Direction, Piece, P};
+use serde::{Deserialize, Serialize};
 use super::bboard::BBoard;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Move {
     pub from: usize,
     pub target: usize,
 		// pub capture: Option<usize>
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,)]
 pub struct Board {
     pub turn: Color,
     pub move_count: u64,
@@ -21,7 +22,7 @@ pub struct Board {
     pub black_cr: CastlingRights,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CastlingRights {
     pub queen: bool,
     pub king: bool,

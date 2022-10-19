@@ -2,8 +2,12 @@ use super::board::{Board, CastlingRights};
 use super::piece::{Color, Direction, Piece, P};
 use rand::Rng;
 use std::fmt::Debug; // 0.8.5
+                     // use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+// use serde::*;
+// use serde_derive::{Serialize, Deserialize};
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Move {
     pub from: u32,
     pub target: u32,
@@ -187,7 +191,7 @@ fn pawn_attacks(bb: u64, color: Color) -> u64 {
 //    return (maindia >> sout) << nort;
 // }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BBoard {
     white: [u64; 7],
     black: [u64; 7],
@@ -532,12 +536,12 @@ impl BBoard {
             }
         }
 
-        return alpha
+        return alpha;
     }
 
     fn alpha_beta_min(&self, alpha: i32, mut beta: i32, depth: u32) -> i32 {
         if depth == 0 {
-            return -self.evaluate(self.turn)
+            return -self.evaluate(self.turn);
         }
 
         let moves = self.get_moves_and_captures(self.turn);
@@ -548,7 +552,7 @@ impl BBoard {
             let score = c.alpha_beta_max(alpha, beta, depth - 1);
 
             if score <= alpha {
-                return alpha
+                return alpha;
             }
 
             if score < beta {
@@ -556,7 +560,7 @@ impl BBoard {
             }
         }
 
-        return beta
+        return beta;
     }
 
     pub fn eval_side_score(&self, side: Color) -> i32 {
@@ -582,7 +586,6 @@ impl BBoard {
     }
 
     pub fn search_good_move(&self, depth: u32) -> Move {
-
         // let mut best_score: i32 = -999999999;
         let mut best_score = -f32::INFINITY as i32;
         let mut best_score = f32::INFINITY as i32;
@@ -597,9 +600,8 @@ impl BBoard {
             },
         };
 
-
         let score = self.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
-        println!(">> score of alpha beta max is {score}", );
+        println!(">> score of alpha beta max is {score}",);
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
             c.push_unchecked_move(&m);
@@ -609,7 +611,6 @@ impl BBoard {
                 best_score = score;
                 best_move = m;
             }
-
         });
 
         best_move
@@ -1008,5 +1009,25 @@ impl BBoard {
         }
 
         return panic!("no piece there");
+    }
+
+
+    pub fn serialize(&self) -> String {
+        // self
+        let serialized = serde_json::to_string(self).unwrap();
+
+        // Prints serialized = {"x":1,"y":2}
+        println!("serialized = {}", serialized);
+        serialized
+    }
+
+    pub fn from_serialization(val: &str) -> BBoard {
+        let b: BBoard = serde_json::from_str(val).unwrap();
+        b
+        // serde_json::Deserializer
+    }
+
+    pub fn to_fen(&self) -> String {
+        todo!()
     }
 }

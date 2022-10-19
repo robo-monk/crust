@@ -1,6 +1,7 @@
 use super::board::Board;
 use super::bboard::*;
 use std::ops::{Add, BitXor, Mul, Shr, ShrAssign};
+use serde::{Serialize, Deserialize};
 
 // A >> B (can A pass through B?)
 impl Shr for Piece {
@@ -156,7 +157,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     Up,
     Down, // and in the end its only round and round
@@ -168,7 +169,7 @@ pub enum Direction {
     DownRight,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub enum Color {
     Black,
     White,
@@ -183,7 +184,7 @@ impl Color {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum P {
     Pawn,
     Knight,
@@ -196,7 +197,7 @@ pub enum P {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Piece {
     pub class: P,
     pub color: Color,
