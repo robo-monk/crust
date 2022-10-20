@@ -18,9 +18,40 @@
       dropzone: '.square'
 		});
 
-    draggable.on('droppable:start', (...params) => {
-      console.log('dropabble start', params);
-    })
+    const getIndex = (e) => e?.data?.dropzone?.dataset.i
+
+    const MOVE = {
+      from: null,
+      target: null,
+      piece: null,
+      captures: null
+    };
+
+    let move = MOVE;
+
+
+    draggable.on('droppable:start', (e) => {
+      move = MOVE;
+
+      const from = getIndex(e);
+      const piece = squares[from];
+
+      move.from = from
+      move.piece = piece
+    });
+
+    draggable.on('droppable:stop', (e) => {
+      const target = getIndex(e);
+      const capturedPiece = squares[target];
+
+      move.target = target
+
+      if (capturedPiece) {
+        move.captures = capturedPiece;
+      }
+
+      console.log('move is', move)
+    });
 	});
 </script>
 
