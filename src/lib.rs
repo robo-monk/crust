@@ -43,3 +43,37 @@ pub fn parse_fen(fen: &str) -> String {
 
     bboard.serialize()
 }
+
+
+#[wasm_bindgen]
+pub fn get_squares(s: &str) -> String {
+  let b = BBoard::from_serialization(s);
+  let board = b.get_board();
+  // let sq = board.squares.map(|p| p.unwrap_or());
+  let sq_vec = board.squares.to_vec();
+  // String::from("hello")
+  serde_json::to_string(&sq_vec).unwrap()
+}
+
+#[wasm_bindgen]
+pub fn search_good_move(s: &str, depth: i32) -> String {
+  let b = BBoard::from_serialization(s);
+  let m = b.search_good_move(depth as u32);
+  serde_json::to_string(&m).unwrap()
+}
+
+// #[wasm_bindgen]
+// pub fn make_move(s: &str, _mov: &str) -> String {
+//   let mut b = BBoard::from_serialization(s);
+//   let mov: Move  = serde_json::from_str(_mov).unwrap();
+//   // b.make(&mov);
+//   b.serialize()
+// }
+
+#[wasm_bindgen]
+pub fn push_unchecked_move(s: &str, _mov: &str) -> String {
+  let mut b = BBoard::from_serialization(s);
+  let mov = serde_json::from_str(_mov).unwrap();
+  b.push_unchecked_move(&mov);
+  b.serialize()
+}

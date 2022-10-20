@@ -239,6 +239,33 @@ impl BBoard {
         let file_letter = char::from_u32((file + 97 as usize).try_into().unwrap()).unwrap();
         format!("{file_letter}{rank}")
     }
+
+    pub fn get_board(&self) -> Board {
+        let mut board = Board::new();
+
+        board.white_cr = self.white_cr.clone();
+        board.black_cr = self.black_cr.clone();
+        board.en_passant = self.en_passant_target;
+        board.turn = self.turn;
+
+        for color in [Color::White, Color::Black] {
+            for (_, class) in PIECES.iter().enumerate() {
+                let piece = Piece {
+                    color,
+                    class: *class,
+                };
+
+                let bb = self.get_bboard_of_piece(&piece);
+
+                loop_through_indeces(bb, |i| {
+                    board.squares[i as usize] = Some(piece)
+                })
+            }
+        }
+
+        board
+    }
+
     pub fn parse_sq(n: &str) -> u8 {
         Board::parse_notation(&n.to_string()).unwrap() as u8
     }
@@ -997,6 +1024,7 @@ impl BBoard {
         // let target = BBoard::parse_sq(sq);
         for i in 0..6 {
             let piece = Piece::new(PIECES[i], side);
+
             // if captured_piece.color.eq(&piece.color) {
 
             let piece_bb = bba[i];
@@ -1025,9 +1053,5 @@ impl BBoard {
         let b: BBoard = serde_json::from_str(val).unwrap();
         b
         // serde_json::Deserializer
-    }
-
-    pub fn to_fen(&self) -> String {
-        todo!()
     }
 }
