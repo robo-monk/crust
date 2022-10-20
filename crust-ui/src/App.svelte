@@ -5,7 +5,8 @@
   import type { Piece } from './chess/dtos/piece';
 	import { Board } from './chess/board';
 
-	const initFen = 'r1bqkbnr/1pp2p1p/p1n5/1P1P4/P1p1p1p1/5N2/4PPPP/RNBQKB1R b KQkq - 0 1';
+	// const initFen = 'r1bqkbnr/1pp2p1p/p1n5/1P1P4/P1p1p1p1/5N2/4PPPP/RNBQKB1R b KQkq - 0 1';
+	const initFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 	let board = Board.fromFen(initFen);
 	console.log('board is', board);
 
