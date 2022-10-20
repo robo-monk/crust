@@ -1,5 +1,5 @@
 mod chess;
-use chess::bboard::{BBoard, Move};
+use chess::bboard::{BBoard, Move, loop_through_indeces};
 use std::{thread, time};
 // use bitvec::prelude::*;
 
@@ -76,4 +76,15 @@ pub fn push_unchecked_move(s: &str, _mov: &str) -> String {
   let mov = serde_json::from_str(_mov).unwrap();
   b.push_unchecked_move(&mov);
   b.serialize()
+}
+
+
+#[wasm_bindgen]
+pub fn get_available_moves_at_index(s: &str, index: i32,  _piece: &str) -> String {
+  let mut b = BBoard::from_serialization(s);
+  let piece: Piece = serde_json::from_str(_piece).unwrap();
+  let moves = b.get_available_moves_at_index(index as u32, &piece);
+  let mut _moves: Vec<i32> = vec![];
+  loop_through_indeces(moves, |i| _moves.push(i as i32));
+  serde_json::to_string(&_moves).unwrap()
 }

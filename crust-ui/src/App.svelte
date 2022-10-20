@@ -12,11 +12,11 @@
 	let _squares = board.squares;
 	console.log('squares are', _squares);
 
-  let squares: [Piece] = JSON.parse(_squares);
+  // let squares: [Piece] = JSON.parse(_squares);
 </script>
 
 <main>
-	<BoardElement {squares} />
+	<BoardElement {board} />
 </main>
 
 <style>
