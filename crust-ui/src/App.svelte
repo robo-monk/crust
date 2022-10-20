@@ -1,46 +1,37 @@
 <script lang="ts">
-  import svelteLogo from './assets/svelte.svg'
-  import Counter from './lib/Counter.svelte'
-  import { Board } from './chess/board';
+	import svelteLogo from './assets/svelte.svg';
+	import Counter from './lib/Counter.svelte';
+	import BoardElement from './lib/Board.svelte';
+  import type { Piece } from './chess/dtos/piece';
+	import { Board } from './chess/board';
+
+	const initFen = 'r1bqkbnr/1pp2p1p/p1n5/1P1P4/P1p1p1p1/5N2/4PPPP/RNBQKB1R b KQkq - 0 1';
+	let board = Board.fromFen(initFen);
+	console.log('board is', board);
+
+	let _squares = board.squares;
+	console.log('squares are', _squares);
+
+  let squares: [Piece] = JSON.parse(_squares);
 </script>
 
 <main>
-  <div>
-    <a href="https://vitejs.dev" target="_blank"> 
-      <img src="/vite.svg" class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank"> 
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
-
-  <div class="card">
-    <Counter />
-  </div>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
+	<BoardElement {squares} />
 </main>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
+	.logo {
+		height: 6em;
+		padding: 1.5em;
+		will-change: filter;
+	}
+	.logo:hover {
+		filter: drop-shadow(0 0 2em #646cffaa);
+	}
+	.logo.svelte:hover {
+		filter: drop-shadow(0 0 2em #ff3e00aa);
+	}
+	.read-the-docs {
+		color: #888;
+	}
 </style>
