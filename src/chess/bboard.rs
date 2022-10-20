@@ -257,9 +257,7 @@ impl BBoard {
 
                 let bb = self.get_bboard_of_piece(&piece);
 
-                loop_through_indeces(bb, |i| {
-                    board.squares[i as usize] = Some(piece)
-                })
+                loop_through_indeces(bb, |i| board.squares[i as usize] = Some(piece))
             }
         }
 
@@ -437,13 +435,16 @@ impl BBoard {
     }
 
     pub fn attack_map_of(&self, color: Color) -> u64 {
-        let us_bitmap = self.get_side_bitmap(color.not());
+        let us_bitmap = self.get_side_bitmap(color);
         let them_bitmap = self.get_side_bitmap(color);
+
         // let us_bitmap = 0;
         // let them_bitmap = them_bitmap;
 
         // let them_bitmap = self.them_bitmap();
+        // let empty = !(us_bitmap | them_bitmap);
         let empty = !(us_bitmap | them_bitmap);
+        // let full_empty = 0xffffffffffffffff;
 
         let op_attacks = pawn_attacks(
             self.get_bboard_of_piece(&Piece {
@@ -480,7 +481,8 @@ impl BBoard {
             class: P::Knight,
         }));
 
-        op_attacks & !them_bitmap
+        // op_attacks & !them_bitmap
+        op_attacks
     }
 
     pub fn preview_moves(&mut self, piece: &Piece) {
@@ -845,6 +847,7 @@ impl BBoard {
                     class: P::Rook,
                 };
                 self.make_unchecked_move(cr_from as u8, cr_to as u8, rook);
+                self.shift_turn();
             }
 
             const DISABLE_CASTLING_RIGHTS: CastlingRights = CastlingRights {
@@ -1001,13 +1004,15 @@ impl BBoard {
                     Color::Black => &self.black_cr,
                 };
 
-                let emtpy_and_not_under_attack = empty & !self.attack_map_of(piece.color.not());
+                let enemy_attack_map = self.attack_map_of(piece.color.not());
+                let emtpy_and_not_under_attack = empty & enemy_attack_map;
                 // let emtpy_and_not_under_attack = !self.attack_map_of(piece.color.not());
                 // let emtpy_and_not_under_attack = self.attack_map_of(piece.color.not());
 
                 // return emtpy_and_not_under_attack;
                 // return (king_attacks(bb, empty));
-                (king_attacks(bb, emtpy_and_not_under_attack)
+                // return enemy_attack_map;
+                (king_attacks(bb, enemy_attack_map)
                     | king_king_castle(bb, emtpy_and_not_under_attack, cr)
                     | king_queen_castle(bb, emtpy_and_not_under_attack, cr))
                     & !us_bitmap
@@ -1038,7 +1043,6 @@ impl BBoard {
 
         return panic!("no piece there");
     }
-
 
     pub fn serialize(&self) -> String {
         // self
