@@ -148,7 +148,7 @@ fn king_attacks(bb: u64) -> u64 {
 
 fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
     if cr.queen {
-        (Direction::Left.shift_once((Direction::Left.shift_once(bb)) & empty_and_not_under_attack))
+        (Direction::Left.shift_twice(bb) | (Direction::Left.shift_once(bb) & empty_and_not_under_attack))
             & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
     } else {
         0
@@ -827,7 +827,7 @@ impl BBoard {
                 // white queen side castling
                 (Color::White, 58) => {
                     // self.white_cr.queen = false;
-                    (58, 58 + Direction::Right.value() + Direction::Right.value())
+                    (56, 56 + Direction::Right.value() + Direction::Right.value() + Direction::Right.value())
                 }
                 // black king side castling
                 (Color::Black, 6) => {
@@ -837,7 +837,7 @@ impl BBoard {
                 // black queen side castling
                 (Color::Black, 1) => {
                     // self.black_cr.queen = false;
-                    (0, 0 + Direction::Right.value() + Direction::Right.value())
+                    (0, 0 + Direction::Right.value() + Direction::Right.value() + Direction::Right.value())
                 }
                 _ => (-1, -1),
             };
