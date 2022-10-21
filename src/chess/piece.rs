@@ -118,9 +118,11 @@ impl Direction {
             Direction::Right => (b << 1) & !A_FILE,
             Direction::UpRight => (b >> 7) & !A_FILE,
             Direction::Up => b >> 8,
+
             Direction::UpLeft =>  (b >> 9) & !H_FILE,
-            Direction::Left => (b << 1) & !H_FILE,
+            Direction::Left => (b >> 1) & !H_FILE,
             Direction::DownLeft => (b << 7) & !H_FILE,
+
             Direction::Down => b << 8,
             _ => panic!("invalid direction"),
         }

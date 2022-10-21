@@ -3,10 +3,8 @@ await init()
 
 const crust = { greet, parse_fen, get_squares, search_good_move, get_available_moves_at_index, push_unchecked_move };
 
-postMessage("yoooooooooo");
 // @ts-ignore
 onmessage = async (message) => {
-
   const {
     id, fn, params
   } = message.data;
@@ -18,8 +16,3 @@ onmessage = async (message) => {
     res
   })
 }
-
-
-// export {
-//   onmessage
-// }

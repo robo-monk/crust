@@ -19,22 +19,13 @@ export class Board {
       type: 'module'
     })
 
-    console.log("worker is", this.worker)
-
     this.worker.addEventListener("message", (ev: MessageEvent) => {
-      console.log('meee', ev)
       if (this.cbs.has(ev.data.id)) {
         const cb = this.cbs.get(ev.data.id)
         cb(ev.data.res);
       }
     });
 
-    this.play()
-  }
-
-  async play() {
-    // let res = await this.#exec("parse_fen")
-    // console.log('res is', res);
   }
 
   // previewMovesOf(sq: number) {
@@ -58,17 +49,12 @@ export class Board {
         this.cbs.delete(id);
       })
     })
-
-    // this.worker.onmessage((e: MessageEvent<any>) => {
-    //   console.log('board#message recieved', e);
-    // })
   }
 
   get squares() {
-
-    // worker.postMessage("get_squares", this.s)
     return JSON.parse(get_squares(this.s));
   }
+  
 
   static fromFen(fen: string) {
     return new Board(parse_fen(fen))
@@ -77,8 +63,6 @@ export class Board {
   async searchGoodMove(depth: number) {
     let res = await this.#exec("search_good_move", this.s, depth)
     return JSON.parse(res)
-    // let m = search_good_move(this.s, depth)
-    // return JSON.parse(m);
   }
 
   pushUncheckedMove(move: Move) {
