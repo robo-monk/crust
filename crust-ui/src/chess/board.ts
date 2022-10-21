@@ -2,16 +2,40 @@
 import init, { greet, parse_fen, get_squares, search_good_move, get_available_moves_at_index, push_unchecked_move } from "../../crust";
 import type { Piece } from "./dtos/piece";
 import type { Move } from "./dtos/move";
+import { nanoid } from "nanoid";
 
 
 await init()
 
 export class Board {
   private s: string
-  constructor (s: string) {
+  private worker: Worker;
+  private cbs: Map<string, Function>
+  constructor(s: string) {
     this.s = s;
+    this.cbs = new Map()
+
+    this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
+      type: 'module'
+    })
+
+    console.log("worker is", this.worker)
+
+    this.worker.addEventListener("message", (ev: MessageEvent) => {
+      console.log('meee', ev)
+      if (this.cbs.has(ev.data.id)) {
+        const cb = this.cbs.get(ev.data.id)
+        cb(ev.data.res);
+      }
+    });
+
+    this.play()
   }
 
+  async play() {
+    // let res = await this.#exec("parse_fen")
+    // console.log('res is', res);
+  }
 
   // previewMovesOf(sq: number) {
   //   return preview_moves(this.s, sq);
@@ -20,7 +44,29 @@ export class Board {
   getAvailableMoveOfSquare(piece: Piece, square: number) {
 
   }
+
+  async #exec(fn: string, ...params): Promise<any> {
+    const id = nanoid();
+
+    this.worker.postMessage({
+      id, fn, params
+    });
+
+    return new Promise(resolve => {
+      this.cbs.set(id, (res) => {
+        resolve(res);
+        this.cbs.delete(id);
+      })
+    })
+
+    // this.worker.onmessage((e: MessageEvent<any>) => {
+    //   console.log('board#message recieved', e);
+    // })
+  }
+
   get squares() {
+
+    // worker.postMessage("get_squares", this.s)
     return JSON.parse(get_squares(this.s));
   }
 
@@ -29,8 +75,10 @@ export class Board {
   }
 
   async searchGoodMove(depth: number) {
-    let m = search_good_move(this.s, depth)
-    return JSON.parse(m);
+    let res = await this.#exec("search_good_move", this.s, depth)
+    return JSON.parse(res)
+    // let m = search_good_move(this.s, depth)
+    // return JSON.parse(m);
   }
 
   pushUncheckedMove(move: Move) {

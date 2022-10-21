@@ -38,9 +38,9 @@
 	$: {
 		(async () => {
 			if (piece) {
-				console.log('piece', piece);
+				// console.log('piece', piece);
 				src = PIECES[`${piece.color}${piece.class}`];
-				console.log('src is', src);
+				// console.log('src is', src);
 			} else {
 				src = null;
 			}
