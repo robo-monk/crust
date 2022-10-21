@@ -1006,7 +1006,7 @@ impl BBoard {
                 };
 
                 let enemy_attack_map = self.attack_map_of(piece.color.not());
-                let emtpy_and_not_under_attack = empty & enemy_attack_map;
+                let emtpy_and_not_under_attack = empty & !enemy_attack_map;
                 // let emtpy_and_not_under_attack = !self.attack_map_of(piece.color.not());
                 // let emtpy_and_not_under_attack = self.attack_map_of(piece.color.not());
 
