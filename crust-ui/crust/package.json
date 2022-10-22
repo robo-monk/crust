@@ -1,0 +1,12 @@
+{
+  "name": "crust",
+  "version": "0.1.1",
+  "files": [
+    "crust_bg.wasm",
+    "crust.js",
+    "crust.d.ts"
+  ],
+  "module": "crust.js",
+  "types": "crust.d.ts",
+  "sideEffects": false
+}
