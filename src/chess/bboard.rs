@@ -644,10 +644,7 @@ impl BBoard {
         let score = self.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
         println!(">> score of alpha beta max is {score}",);
         console_log!(">> socre of alpha beta max is {score}");
-        let us = self.get_side_bitmap(self.turn);
-        let them = self.get_side_bitmap(self.turn.not());
-        let empty = !(us | them);
-        let check = self.is_in_check(empty, self.turn);
+        let check = self.is_in_check(self.turn);
         console_log!("is in check? {:?}", check);
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
@@ -960,14 +957,12 @@ impl BBoard {
         (bb & op_attacks).count_ones()
     }
 
-    pub fn is_in_check(&self, empty: u64, color: Color) -> bool {
-        let emtpy_and_not_under_attack = empty & !self.attack_map_of(color.not());
-        (emtpy_and_not_under_attack
+    pub fn is_in_check(&self, color: Color) -> bool {
+        (self.attack_map_of(color.not()) 
             & self.get_bboard_of_piece(&Piece {
-                color,
-                class: P::King,
-            }))
-            == 0
+            color,
+            class: P::King,
+        })) == 0
     }
 
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
