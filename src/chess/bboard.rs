@@ -4,8 +4,19 @@ use rand::Rng;
 use std::fmt::Debug; // 0.8.5
                      // use serde::{Serialize, Deserialize};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
+
 // use serde::*;
 // use serde_derive::{Serialize, Deserialize};
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+macro_rules! console_log {
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Move {
@@ -632,6 +643,12 @@ impl BBoard {
 
         let score = self.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
         println!(">> score of alpha beta max is {score}",);
+        console_log!(">> socre of alpha beta max is {score}");
+        let us = self.get_side_bitmap(self.turn);
+        let them = self.get_side_bitmap(self.turn.not());
+        let empty = !(us | them);
+        let check = self.is_in_check(empty, self.turn);
+        console_log!("is in check? {:?}", check);
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
             c.push_unchecked_move(&m);
