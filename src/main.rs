@@ -185,13 +185,15 @@ macro_rules! hashmap {
 #[test]
 fn rules_are_right() {
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    let mut board = Board::from_fen(&fen);
+    // let mut board = Board::from_fen(&fen);
+    let mut board = BBoard::from_fen(&fen);
     // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609, 6 => 119060324 ];
     let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609 ];
-    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281];
+    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281 ];
+    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902]; // passes
 
     for (ply, expected_count) in plys_count.iter() {
-        let count = board.count_ply_moves(*ply);
+        let count = board.count_ply_moves(*ply) as usize;
         assert_eq!(
             count, *expected_count as usize,
             "ply {ply} should be {expected_count} but was {count}"

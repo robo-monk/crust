@@ -55,13 +55,13 @@
 
 		draggable.on('droppable:dropped', (e) => {
       const _pieces = e.data.dropzone.querySelectorAll(".piece")
-      console.log(_pieces, "<<<<<<<<<<<<<<<<")
+      // console.log(_pieces, "<<<<<<<<<<<<<<<<")
       // if (_pieces.length) {
       //   Array.from(_pieces).forEach(_piece => _piece.style.display = 'none')
       // }
-      console.log(e);
+      // console.log(e);
       let i = getIndex(e)
-      console.log('i is', i, availableMoves);
+      // console.log('i is', i, availableMoves);
       if (!availableMoves.has(i)) e.cancel()
       // e.stopPropagation()
     })
@@ -87,7 +87,8 @@
 			console.log('move is', move);
       board.pushUncheckedMove(move)
 
-      let goodMove= await board.searchGoodMove(4);
+      // let goodMove= await board.searchGoodMove(4);
+      let goodMove= await board.searchGoodMove(3);
       console.log("good move is", goodMove)
       board.pushUncheckedMove(goodMove)
 
