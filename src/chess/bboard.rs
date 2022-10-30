@@ -159,8 +159,8 @@ fn king_attacks(bb: u64) -> u64 {
 
 fn king_queen_castle(bb: u64, empty_and_not_under_attack: u64, cr: &CastlingRights) -> u64 {
     if cr.queen {
-        (Direction::Left.shift_twice(bb) | (Direction::Left.shift_once(bb) & empty_and_not_under_attack))
-            & (Direction::Left.shift_twice(bb) & empty_and_not_under_attack)
+        let first_step = Direction::Left.shift_once(bb) & empty_and_not_under_attack;
+        Direction::Left.shift_once(first_step) & empty_and_not_under_attack
     } else {
         0
     }
@@ -447,7 +447,7 @@ impl BBoard {
 
     pub fn attack_map_of(&self, color: Color) -> u64 {
         let us_bitmap = self.get_side_bitmap(color);
-        let them_bitmap = self.get_side_bitmap(color);
+        let them_bitmap = self.get_side_bitmap(color.not());
 
         // let us_bitmap = 0;
         // let them_bitmap = them_bitmap;
