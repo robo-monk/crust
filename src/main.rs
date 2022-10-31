@@ -4,6 +4,7 @@ mod chess;
 use chess::bboard::{BBoard, Move};
 use std::{thread, time};
 use crust::*;
+
 // use bitvec::prelude::*;
 
 // use chess::{Board};
@@ -34,10 +35,11 @@ fn main() {
 
     bboard.pprint();
 
-    let ply = 4;
+    let ply = 6;
 
     let m = bboard.count_ply_moves(ply);
     println!("ply({ply}) -> {m}");
+    return;
 
     // bboard.preview_moves(&Piece { class: P::Pawn, color: Color::Black });
     println!("starting agent at (depth: {ply})");
@@ -187,8 +189,8 @@ fn rules_are_right() {
     let fen = String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // let mut board = Board::from_fen(&fen);
     let mut board = BBoard::from_fen(&fen);
-    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609, 6 => 119060324 ];
-    let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609 ];
+    let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609, 6 => 119060324 ];
+    // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281, 5 => 4865609 ];
     // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902, 4 => 197281 ];
     // let plys_count = hashmap![1 => 20, 2 => 400, 3 => 8902]; // passes
 
@@ -200,4 +202,3 @@ fn rules_are_right() {
         );
     }
 }
-// }

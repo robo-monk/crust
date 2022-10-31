@@ -87,8 +87,8 @@
 			console.log('move is', move);
       board.pushUncheckedMove(move)
 
-      // let goodMove= await board.searchGoodMove(4);
-      let goodMove= await board.searchGoodMove(3);
+      let goodMove= await board.searchGoodMove(4);
+      // let goodMove= await board.searchGoodMove(3);
       console.log("good move is", goodMove)
       board.pushUncheckedMove(goodMove)
 

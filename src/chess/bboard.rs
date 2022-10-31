@@ -8,14 +8,15 @@ use wasm_bindgen::prelude::*;
 
 // use serde::*;
 // use serde_derive::{Serialize, Deserialize};
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
+// #[wasm_bindgen]
+// extern "C" {
+//     #[wasm_bindgen(js_namespace = console)]
+//     fn log(s: &str);
+// }
 
 macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => (println!("{}", format_args!($($t)*).to_string()))
+    // ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -183,56 +184,6 @@ fn pawn_attacks(bb: u64, color: Color) -> u64 {
     }
 }
 
-//             fn loop_through_moves_of_piece<F>(from: u32, piece: Piece, moves: u64, them: u64, mut reducer: F)
-//             where F: FnMut(Move) {
-//                 let captures = moves & them;
-// loop_through_indeces(moves & !captures, |target| {
-//                     let m = Move {
-//                         from,
-//                         target,
-//                         piece,
-//                         captures: None,
-//                     };
-
-//                     reducer(m);
-//                 });
-
-//                 loop_through_indeces(captures, |target| {
-//                     for i in 0..6 {
-//                         let captured_piece = Piece::new(PIECES[i], side.not());
-//                         let piece_bb = self.get_bboard_of_piece(&captured_piece);
-//                         if (piece_bb & index_mask(target)) > 0 {
-//                             let m = Move {
-//                                 from,
-//                                 target,
-//                                 piece,
-//                                 captures: Some(captured_piece),
-//                             };
-
-//                             reducer(m);
-//                         }
-//                     }
-//                 });
-//             }
-// U64 rankMask(int sq) {return  C64(0xff) << (sq & 56);}
-
-// U64 fileMask(int sq) {return C64(0x0101010101010101) << (sq & 7);}
-
-// U64 diagonalMask(int sq) {
-//    const U64 maindia = C64(0x8040201008040201);
-//    int diag =8*(sq & 7) - (sq & 56);
-//    int nort = -diag & ( diag >> 31);
-//    int sout =  diag & (-diag >> 31);
-//    return (maindia >> sout) << nort;
-// }
-
-// U64 antiDiagMask(int sq) {
-//    const U64 maindia = C64(0x0102040810204080);
-//    int diag =56- 8*(sq&7) - (sq&56);
-//    int nort = -diag & ( diag >> 31);
-//    int sout =  diag & (-diag >> 31);
-//    return (maindia >> sout) << nort;
-// }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BBoard {
@@ -467,6 +418,16 @@ impl BBoard {
         todo!()
     }
 
+    pub fn get_attackers_of_bb(bb: u64, us: u64, them: u64) -> u64 {
+        let empty = !(us | them);
+
+        let possible_attacks = queen_attacks(
+            bb, empty
+        ) | knight_attacks(bb);
+
+        possible_attacks & them
+    }
+
     pub fn attack_map_of(&self, color: Color) -> u64 {
         let us_bitmap = self.get_side_bitmap(color);
         let them_bitmap = self.get_side_bitmap(color.not());
@@ -660,7 +621,12 @@ impl BBoard {
     }
 
     pub fn search_good_move(&self, depth: u32) -> Move {
-        let check = self.is_in_check(self.turn);
+        // let check = self.is_in_check(self.turn);
+        let check = BBoard::is_in_check(self.get_bboard_of_piece(&Piece {
+            class: P::King,
+            color: self.turn
+        }), self.get_side_bitmap(self.turn), self.get_side_bitmap(self.turn.not()));
+
         let turn = self.turn;
         console_log!("> Is [{turn:?}] in check? {:?}", check);
 
@@ -680,7 +646,9 @@ impl BBoard {
 
         let score = self.alpha_beta_max(-f32::INFINITY as i32, f32::INFINITY as i32, depth);
         println!(">> score of alpha beta max is {score}",);
+
         console_log!(">> socre of alpha beta max is {score}");
+
         self.loop_through_moves_and_captures(self.turn, |m| {
             let mut c = self.clone();
             let res = c.push_unchecked_move(&m);
@@ -891,7 +859,7 @@ impl BBoard {
                     (7, 7 + Direction::Left.value() + Direction::Left.value())
                 }
                 // black queen side castling
-                (Color::Black, 1) => {
+                (Color::Black, 2) => {
                     // self.black_cr.queen = false;
                     (
                         0,
@@ -947,7 +915,14 @@ impl BBoard {
             };
         }
 
-        if self.is_in_check(m.piece.color) {
+        let check = BBoard::is_in_check(self.get_bboard_of_piece(&Piece {
+            class: P::King,
+            color: m.piece.color 
+        }), self.get_side_bitmap(m.piece.color), self.get_side_bitmap(m.piece.color.not()));
+
+
+        // if self.is_in_check(m.piece.color) {
+        if check {
             return Err(());
         } else {
             return Ok(());
@@ -970,14 +945,19 @@ impl BBoard {
         todo!()
     }
 
-    pub fn is_in_check(&self, color: Color) -> bool {
-        (self.attack_map_of(color.not())
-            & self.get_bboard_of_piece(&Piece {
-                color,
-                class: P::King,
-            }))
-            != 0
+    pub fn is_in_check(king: u64, us: u64, them: u64) -> bool {
+        let attackers = BBoard::get_attackers_of_bb(king, us, them);
+        attackers != 0
     }
+
+    // pub fn is_in_check(&self, color: Color) -> bool {
+    //     (self.attack_map_of(color.not())
+    //         & self.get_bboard_of_piece(&Piece {
+    //             color,
+    //             class: P::King,
+    //         }))
+    //         != 0
+    // }
 
     pub fn get_available_moves_of_piece_type(&self, bb: u64, piece: &Piece) -> u64 {
         let us_bitmap = self.get_side_bitmap(piece.color);
@@ -985,13 +965,7 @@ impl BBoard {
 
         let empty = !(us_bitmap | them_bitmap);
 
-        let is_in_check = self.is_in_check(piece.color);
-        // if self.is_in_check(empty, piece.color) {
-        //     // println!("IM IN CHECK");
-        //     // self.clone().pprint();
-        // }
-
-        let moves = match piece.class {
+        match piece.class {
             P::Pawn => {
                 let mut en_passant_bitmap = 0;
                 if self.turn == piece.color {
@@ -1050,26 +1024,21 @@ impl BBoard {
             P::Bishop => bishop_attacks(bb, empty) & !us_bitmap,
             P::Knight => knight_attacks(bb) & !us_bitmap,
             _ => todo!(),
-        };
+        }
 
-        // if is_in_check {
-        // filter out moves that don't uncheck
-
-        // let
-        // }
         // let enemy_attack_map = self.attack_map_of(piece.color.not());
-        let enemy_attack_map = self._attack_map_of(
-            piece.color.not(),
-            us_bitmap | (us_bitmap ^ moves),
-            them_bitmap,
-        );
-        let king_bb = self.get_bboard_of_piece(&Piece {
-            class: P::King,
-            color: piece.color,
-        });
+        // let enemy_attack_map = self._attack_map_of(
+        //     piece.color.not(),
+        //     us_bitmap | (us_bitmap ^ moves),
+        //     them_bitmap,
+        // );
+        // let king_bb = self.get_bboard_of_piece(&Piece {
+        //     class: P::King,
+        //     color: piece.color,
+        // });
 
         // return !(enemy_attack_map & king_bb);
-        return moves & !(enemy_attack_map & king_bb);
+        // return moves & !(enemy_attack_map & king_bb);
 
         // moves
     }
